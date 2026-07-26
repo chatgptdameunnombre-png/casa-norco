@@ -103,7 +103,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .site-hero--green { background: radial-gradient(42% 42% at 9% 2%, rgba(120,200,40,.16), transparent 60%), radial-gradient(46% 46% at 97% 100%, rgba(120,200,40,.13), transparent 60%), #0a0a0b; }
 .site-hero--green::before { display: none; }
 .site-hero--green::after { top: 40%; width: 760px; height: 760px; background: radial-gradient(circle, rgba(198,240,50,.20), transparent 62%); }
-.site-hero--green .hero-c__iso { width: 118px; height: 118px; opacity: 1; }
+.site-hero--green .hero-c__iso { width: 180px; height: 180px; opacity: 1; }
 .site-hero::before {
   content: ""; position: absolute; inset: 0; z-index: -2;
   background:
@@ -271,6 +271,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 /* ============ Catálogo: encabezado ============ */
 .sec--top { padding-top: 56px; }
+main.sec--top { max-width: none; padding-left: 34px; padding-right: 34px; }
 .sec__head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 40px; gap: 16px; flex-wrap: wrap; }
 .sec__head h2 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); letter-spacing: -.01em; text-transform: uppercase; }
 .sec__head p { color: var(--muted); font-size: 15px; margin-top: 6px; }
