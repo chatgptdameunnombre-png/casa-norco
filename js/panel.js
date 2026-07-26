@@ -74,7 +74,7 @@ function comprimirImagen(file, size = 1000, calidad = 0.82) {
       const c = document.createElement("canvas");
       c.width = size; c.height = size;
       const ctx = c.getContext("2d");
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#101013";
       ctx.fillRect(0, 0, size, size);
       const escala = Math.min(size / img.width, size / img.height);
       const w = img.width * escala, h = img.height * escala;
