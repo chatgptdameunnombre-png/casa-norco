@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del dueño — Casa Norco</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="admin-body">
+
+  <div class="login-screen" id="loader">
+    <div style="text-align:center;color:var(--muted)">Cargando panel…</div>
+  </div>
+
+  <div id="dash" hidden>
+    <header class="admin-top">
+      <div class="wrap admin-top__in">
+        <a href="panel.html" class="brand">Casa <span class="dot">Norco</span> <small>Panel</small></a>
+        <div style="display:flex;align-items:center;gap:16px">
+          <span class="who" id="who"></span>
+          <a href="index.html" class="btn btn--ghost" target="_blank">Ver tienda ↗</a>
+          <button class="btn btn--ghost" id="logout">Salir</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap admin-main">
+      <div class="admin-head">
+        <h1>Mis productos</h1>
+        <button class="btn" id="addBtn" style="width:auto">+ Agregar producto</button>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Productos</div></div>
+        <div class="stat"><div class="n" id="stStock">0</div><div class="l">Unidades en stock</div></div>
+        <div class="stat"><div class="n" id="stOut">0</div><div class="l">Agotados</div></div>
+      </div>
+
+      <div class="p-table">
+        <div class="p-row p-row--head">
+          <span></span><span>Producto</span><span class="hide-sm">Categoría</span>
+          <span class="hide-sm">Precio</span><span>Stock</span><span></span>
+        </div>
+        <div id="pList"></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-ov" id="modalOv">
+    <div class="modal">
+      <div class="modal__head">
+        <h3 id="modalTitle">Nuevo producto</h3>
+        <button class="icon-btn" id="modalClose">✕</button>
+      </div>
+      <form id="prodForm">
+        <div class="modal__body">
+          <input type="hidden" id="pId">
+          <div class="row-2">
+            <div class="field"><label>Nombre</label><input class="input" id="pNombre" required></div>
+            <div class="field"><label>Marca</label><input class="input" id="pMarca" required></div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>Categoría</label>
+              <select class="input" id="pCategoria" required>
+                <option value="">Elige…</option>
+                <option>Bicicletas</option>
+                <option>Accesorios</option>
+              </select>
+            </div>
+            <div class="field"><label>Subcategoría</label>
+              <select class="input" id="pSub"><option value="">—</option></select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field"><label>Precio (MXN)</label><input class="input" id="pPrecio" type="number" min="0" required></div>
+            <div class="field"><label>Stock (unidades)</label><input class="input" id="pStock" type="number" min="0" required></div>
+          </div>
+          <div class="field"><label>Descripción</label><textarea class="input" id="pDesc" rows="3" placeholder="Describe el producto para el cliente…"></textarea></div>
+          <div class="field"><label>Especificaciones (una por línea)</label><textarea class="input" id="pSpecs" rows="4" placeholder="Cuadro de aluminio&#10;Grupo Shimano&#10;Rodada 29&quot;"></textarea></div>
+          <div class="field">
+            <label>Fotos del producto</label>
+            <input type="file" id="pFile" accept="image/*" multiple hidden>
+            <button type="button" class="btn btn--ghost" id="pFileBtn" style="width:100%">📷 Subir fotos desde tu dispositivo</button>
+            <p class="hint-foto">La primera foto es la principal. Se comprimen solas para que carguen rápido.</p>
+            <div class="fotos-grid" id="pFotos"></div>
+          </div>
+        </div>
+        <div class="modal__foot">
+          <button type="button" class="btn btn--ghost" id="modalCancel">Cancelar</button>
+          <button type="submit" class="btn btn--accent" style="width:auto">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+  <script type="module" src="js/panel.js"></script>
+</body>
+</html>
