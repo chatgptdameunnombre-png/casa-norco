@@ -71,6 +71,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   backdrop-filter: blur(16px) saturate(120%);
   border-bottom: 1px solid var(--line-soft);
 }
+.hdr .wrap { max-width: none; padding: 0 34px; }
 .hdr__in { display: flex; align-items: center; justify-content: flex-start; height: 74px; }
 .hdr__in .nav { margin-left: auto; }
 .hdr__in .cart-btn { margin-left: 32px; }
