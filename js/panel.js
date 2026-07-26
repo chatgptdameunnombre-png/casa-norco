@@ -15,7 +15,6 @@ let fotosActuales = [];
 
 db.onAuth(user => {
   if (!user) { window.location.replace("admin.html"); return; }
-  $("#who").textContent = user.email;
   $("#loader").hidden = true;
   $("#dash").hidden = false;
   window.scrollTo(0, 0);
@@ -34,7 +33,7 @@ async function arrancarDash() {
 function stockPill(s) {
   if (s <= 0) return `<span class="stock-pill" style="color:var(--danger)">Agotado</span>`;
   if (s <= 3) return `<span class="stock-pill" style="color:var(--warn)">${s} · bajo</span>`;
-  return `<span class="stock-pill" style="color:var(--ok)">${s}</span>`;
+  return `<span class="stock-pill" style="color:var(--ink)">${s}</span>`;
 }
 
 function render() {
