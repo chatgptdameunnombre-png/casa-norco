@@ -69,7 +69,7 @@ function render() {
           ${sinStock ? "Agotado" : "Comprar por WhatsApp"}
         </button>
         <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px">
-          <input type="checkbox" id="envioProd" style="width:18px;height:18px;accent-color:#c6f032"> 🏠 Envío a domicilio (+${money(ENVIO_DOMICILIO)})
+          <input type="checkbox" id="envioProd" style="width:18px;height:18px;accent-color:#c6f032"> Envío a domicilio (+${money(ENVIO_DOMICILIO)})
         </label>
         <div id="prodTotal" style="margin-top:8px;font-weight:600;color:#c6f032"></div>
         ${p.descripcion ? `<p class="prod__desc">${p.descripcion}</p>` : ""}
@@ -92,7 +92,7 @@ function comprarDirecto() {
   const envio = $("#envioProd")?.checked;
   const total = p.precio + (envio ? ENVIO_DOMICILIO : 0);
   let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n• ${p.nombre} — ${money(p.precio)}\n`;
-  msg += envio ? `🏠 Envío a domicilio: ${money(ENVIO_DOMICILIO)}` : `🏪 Recoger en tienda`;
+  msg += envio ? `Envío a domicilio: ${money(ENVIO_DOMICILIO)}` : `Recoger en tienda`;
   msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
   window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
 }
