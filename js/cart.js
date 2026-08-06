@@ -81,8 +81,8 @@ function checkout() {
   const total = subtotal + (envio ? ENVIO_DOMICILIO : 0);
   let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n`;
   items.forEach(i => { msg += `• ${i.qty}× ${i.nombre} — ${money(i.precio * i.qty)}\n`; });
-  if (envio) msg += `\n🏠 Envío a domicilio: ${money(ENVIO_DOMICILIO)}`;
-  else msg += `\n🏪 Recoger en tienda`;
+  if (envio) msg += `\nEnvío a domicilio: ${money(ENVIO_DOMICILIO)}`;
+  else msg += `\nRecoger en tienda`;
   msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
   window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -117,7 +117,7 @@ export function initCart() {
   if (foot && !$("#envioToggle")) {
     const wrap = document.createElement("label");
     wrap.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:14px";
-    wrap.innerHTML = `<input type="checkbox" id="envioToggle" style="width:18px;height:18px;accent-color:#c6f032"> 🏠 Envío a domicilio (+${money(ENVIO_DOMICILIO)})`;
+    wrap.innerHTML = `<input type="checkbox" id="envioToggle" style="width:18px;height:18px;accent-color:#c6f032"> Envío a domicilio (+${money(ENVIO_DOMICILIO)})`;
     foot.prepend(wrap);
     $("#envioToggle").addEventListener("change", e => { envio = e.target.checked; renderCart(); });
   }
