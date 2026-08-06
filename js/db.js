@@ -13,11 +13,19 @@ if (usaFirebase) {
   impl = crearImplDemo();
 }
 
+function separarFotos(data) {
+  const { id, imagenes, ...resto } = data;
+  const fotos = Array.isArray(imagenes) ? imagenes : [];
+  const principal = { ...resto, imagen: fotos[0] || resto.imagen || "", nFotos: fotos.length };
+  const extra = fotos.slice(1);
+  return { id, principal, fotos, extra };
+}
+
 async function crearImplFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js");
   const {
-    getFirestore, collection, onSnapshot, addDoc, doc, updateDoc,
-    deleteDoc, getDocs, setDoc, query, orderBy
+    getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, getDoc,
+    deleteDoc, getDocs, setDoc, deleteField, query, orderBy
   } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js");
   const {
     getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
@@ -27,6 +35,13 @@ async function crearImplFirebase() {
   const fdb = getFirestore(app);
   const auth = getAuth(app);
   const col = collection(fdb, "productos");
+  const refProd = id => doc(fdb, "productos", id);
+  const refFotos = id => doc(fdb, "productos_fotos", id);
+
+  async function escribirFotos(id, extra) {
+    if (extra.length) await setDoc(refFotos(id), { imagenes: extra });
+    else await deleteDoc(refFotos(id)).catch(() => {});
+  }
 
   return {
     modo: "nube",
@@ -36,12 +51,32 @@ async function crearImplFirebase() {
       });
     },
     async addProduct(data) {
-      const { id, ...resto } = data;
-      if (id) await setDoc(doc(fdb, "productos", id), resto);
-      else await addDoc(col, resto);
+      const ref = data.id ? refProd(data.id) : doc(col);
+      const { principal, extra } = separarFotos({ ...data, id: ref.id });
+      await setDoc(ref, principal);
+      await escribirFotos(ref.id, extra);
     },
-    updateProduct(id, patch) { return updateDoc(doc(fdb, "productos", id), patch); },
-    deleteProduct(id) { return deleteDoc(doc(fdb, "productos", id)); },
+    async updateProduct(id, patch) {
+      if ("imagenes" in patch) {
+        const { principal, extra } = separarFotos({ ...patch, id });
+        await escribirFotos(id, extra);
+        return updateDoc(refProd(id), { ...principal, imagenes: deleteField() });
+      }
+      return updateDoc(refProd(id), patch);
+    },
+    async deleteProduct(id) {
+      await deleteDoc(refFotos(id)).catch(() => {});
+      return deleteDoc(refProd(id));
+    },
+    async getFotos(id) {
+      const fs = await getDoc(refFotos(id));
+      const extra = fs.exists() ? (fs.data().imagenes || []) : null;
+      const ms = await getDoc(refProd(id));
+      const d = ms.exists() ? ms.data() : {};
+      if (extra) return [d.imagen, ...extra].filter(Boolean);
+      if (d.imagenes?.length) return d.imagenes;
+      return d.imagen ? [d.imagen] : [];
+    },
     login(email, pass) { return signInWithEmailAndPassword(auth, email, pass); },
     logout() { return signOut(auth); },
     onAuth(cb) { return onAuthStateChanged(auth, u => cb(u ? { email: u.email } : null)); },
@@ -49,10 +84,29 @@ async function crearImplFirebase() {
       const snap = await getDocs(col);
       if (snap.empty) {
         for (const p of PRODUCTOS_SEED) {
-          const { id, ...resto } = p;
-          await setDoc(doc(fdb, "productos", id), resto);
+          const { principal, extra } = separarFotos(p);
+          await setDoc(refProd(p.id), principal);
+          await escribirFotos(p.id, extra);
         }
       }
+    },
+    async optimizarCatalogo(onProgress) {
+      const snap = await getDocs(col);
+      let hechos = 0;
+      for (const d of snap.docs) {
+        const data = d.data();
+        if (!data.imagenes?.length) continue;
+        const extra = data.imagenes.slice(1);
+        await escribirFotos(d.id, extra);
+        await updateDoc(refProd(d.id), {
+          imagen: data.imagenes[0] || data.imagen || "",
+          nFotos: data.imagenes.length,
+          imagenes: deleteField()
+        });
+        hechos++;
+        onProgress?.(hechos);
+      }
+      return hechos;
     }
   };
 }
@@ -71,8 +125,9 @@ function crearImplDemo() {
     notificar();
     bc?.postMessage("cambio");
   };
+  const ligero = ({ imagenes, ...p }) => ({ ...p, imagen: (imagenes?.[0]) || p.imagen || "", nFotos: imagenes?.length || (p.imagen ? 1 : 0) });
   const notificar = () => {
-    const arr = [...leer()].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    const arr = [...leer()].map(ligero).sort((a, b) => a.nombre.localeCompare(b.nombre));
     listeners.forEach(cb => cb(arr));
   };
 
@@ -88,24 +143,38 @@ function crearImplDemo() {
     modo: "demo",
     onProducts(cb) {
       listeners.add(cb);
-      cb([...leer()].sort((a, b) => a.nombre.localeCompare(b.nombre)));
+      cb([...leer()].map(ligero).sort((a, b) => a.nombre.localeCompare(b.nombre)));
       return () => listeners.delete(cb);
     },
     async addProduct(data) {
       const arr = leer();
       const id = data.id || `p_${Date.now()}`;
+      const fotos = Array.isArray(data.imagenes) ? data.imagenes : (data.imagen ? [data.imagen] : []);
       const i = arr.findIndex(p => p.id === id);
-      const item = { ...data, id };
+      const item = { ...data, id, imagenes: fotos, imagen: fotos[0] || "" };
       if (i >= 0) arr[i] = item; else arr.push(item);
       guardar(arr);
     },
     async updateProduct(id, patch) {
       const arr = leer();
       const i = arr.findIndex(p => p.id === id);
-      if (i >= 0) { arr[i] = { ...arr[i], ...patch }; guardar(arr); }
+      if (i < 0) return;
+      const merged = { ...arr[i], ...patch };
+      if ("imagenes" in patch) {
+        const fotos = Array.isArray(patch.imagenes) ? patch.imagenes : [];
+        merged.imagenes = fotos;
+        merged.imagen = fotos[0] || "";
+      }
+      arr[i] = merged;
+      guardar(arr);
     },
     async deleteProduct(id) {
       guardar(leer().filter(p => p.id !== id));
+    },
+    async getFotos(id) {
+      const p = leer().find(x => x.id === id);
+      if (!p) return [];
+      return p.imagenes?.length ? p.imagenes : (p.imagen ? [p.imagen] : []);
     },
     async login(email, pass) {
       if (email.trim().toLowerCase() === DEMO_USER.email && pass === DEMO_USER.pass) {
@@ -121,7 +190,8 @@ function crearImplDemo() {
     onAuth(cb) { authListeners.add(cb); cb(usuarioActual()); return () => authListeners.delete(cb); },
     async seedIfEmpty() {
       if (leer().length === 0) guardar(PRODUCTOS_SEED.map(p => ({ ...p })));
-    }
+    },
+    async optimizarCatalogo() { return 0; }
   };
 }
 
