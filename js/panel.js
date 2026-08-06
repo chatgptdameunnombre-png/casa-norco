@@ -135,6 +135,11 @@ function editar(id) {
   fotosActuales = p.imagenes?.length ? [...p.imagenes] : (p.imagen ? [p.imagen] : []);
   renderFotos();
   abrir();
+  db.getFotos(id).then(fotos => {
+    if ($("#pId").value !== id) return;
+    fotosActuales = fotos;
+    renderFotos();
+  }).catch(() => {});
 }
 
 $("#prodForm").addEventListener("submit", async e => {
@@ -174,6 +179,22 @@ async function borrar(id) {
 
 /* ---------- eventos ---------- */
 $("#addBtn").onclick = nuevo;
+$("#optBtn").onclick = async () => {
+  if (!confirm("Optimiza las fotos de todos los productos para que la tienda cargue más rápido y gaste menos. Se corre una sola vez. ¿Continuar?")) return;
+  const btn = $("#optBtn");
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = "Optimizando…";
+  try {
+    const n = await db.optimizarCatalogo(hechos => { btn.textContent = `Optimizando… ${hechos}`; });
+    toast(n ? `Listo: ${n} producto${n === 1 ? "" : "s"} optimizado${n === 1 ? "" : "s"}` : "Ya estaba todo optimizado");
+  } catch (err) {
+    toast("Error al optimizar: " + (err.message || "reintenta"));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
 $("#modalClose").onclick = cerrar;
 $("#modalCancel").onclick = cerrar;
 ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
