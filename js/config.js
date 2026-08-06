@@ -9,6 +9,8 @@ export const firebaseConfig = {
 
 export const WHATSAPP_NUMERO = "523343288620";
 
+export const ENVIO_DOMICILIO = 380;
+
 export const NEGOCIO = {
   nombre: "Casa Norco",
   claim: "Bicicletas premium, taller y café",
