@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMERO, NEGOCIO } from "./config.js";
+import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO } from "./config.js";
 
 const CART_KEY = "bici_cart";
 const $ = s => document.querySelector(s);
@@ -6,6 +6,7 @@ const money = n => "$" + Number(n).toLocaleString("es-MX");
 
 let cart = cargar();
 let productos = [];
+let envio = false;
 
 function cargar() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; }
@@ -38,7 +39,8 @@ export function renderCart() {
   }).filter(Boolean).filter(i => i.qty > 0);
 
   const count = items.reduce((a, i) => a + i.qty, 0);
-  const total = items.reduce((a, i) => a + i.qty * i.precio, 0);
+  const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
+  const total = subtotal + (envio ? ENVIO_DOMICILIO : 0);
   const countEl = $("#cartCount");
   if (countEl) countEl.textContent = count;
 
@@ -64,6 +66,8 @@ export function renderCart() {
       <button class="line__rm" data-rm="${i.id}">Quitar</button>
     </div>`).join("");
   $("#cartTotal").textContent = money(total);
+  const chk = $("#envioToggle");
+  if (chk) chk.checked = envio;
   $("#cartFoot").hidden = false;
 }
 
@@ -73,10 +77,13 @@ function checkout() {
     return p ? { ...p, qty: Math.min(c.qty, p.stock) } : null;
   }).filter(Boolean).filter(i => i.qty > 0);
   if (!items.length) return;
-  const total = items.reduce((a, i) => a + i.qty * i.precio, 0);
+  const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
+  const total = subtotal + (envio ? ENVIO_DOMICILIO : 0);
   let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n`;
   items.forEach(i => { msg += `• ${i.qty}× ${i.nombre} — ${money(i.precio * i.qty)}\n`; });
-  msg += `\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
+  if (envio) msg += `\n🏠 Envío a domicilio: ${money(ENVIO_DOMICILIO)}`;
+  else msg += `\n🏪 Recoger en tienda`;
+  msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
   window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
@@ -106,5 +113,13 @@ export function initCart() {
   $("#closeCart")?.addEventListener("click", closeDrawer);
   $("#overlay")?.addEventListener("click", closeDrawer);
   $("#checkout")?.addEventListener("click", checkout);
+  const foot = $("#cartFoot");
+  if (foot && !$("#envioToggle")) {
+    const wrap = document.createElement("label");
+    wrap.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:14px";
+    wrap.innerHTML = `<input type="checkbox" id="envioToggle" style="width:18px;height:18px;accent-color:#c6f032"> 🏠 Envío a domicilio (+${money(ENVIO_DOMICILIO)})`;
+    foot.prepend(wrap);
+    $("#envioToggle").addEventListener("change", e => { envio = e.target.checked; renderCart(); });
+  }
   renderCart();
 }
