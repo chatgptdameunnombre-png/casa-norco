@@ -121,7 +121,7 @@ function montar() {
         : `<div class="ac-ph">📷</div>`;
       return `
         <div class="ac-card">
-          <div class="ac-media">${foto}</div>
+          <div class="ac-media">${foto}${sinStock ? '<span class="ac-out">Agotado</span>' : ''}</div>
           <div class="ac-info">
             <div class="ac-name">${p.nombre}</div>
             <div class="ac-price">${money(p.precio)} <span>MXN</span></div>
@@ -192,7 +192,8 @@ const CSS = `
 @keyframes asdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 .asesor-cards{display:flex;flex-direction:column;gap:9px;align-self:stretch}
 .ac-card{display:flex;gap:11px;background:#0f0f12;border:1px solid #26262c;border-radius:13px;padding:9px}
-.ac-media{width:70px;height:70px;flex:0 0 70px;border-radius:9px;overflow:hidden;background:#17171b;display:flex;align-items:center;justify-content:center}
+.ac-media{width:70px;height:70px;flex:0 0 70px;border-radius:9px;overflow:hidden;background:#17171b;display:flex;align-items:center;justify-content:center;position:relative}
+.ac-out{position:absolute;top:4px;left:4px;background:#e5484d;color:#fff;font-size:8.5px;font-weight:800;padding:2px 5px;border-radius:5px;letter-spacing:.02em}
 .ac-media img{width:100%;height:100%;object-fit:cover}
 .ac-ph{font-size:22px;opacity:.5}
 .ac-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
