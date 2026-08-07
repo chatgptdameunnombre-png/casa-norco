@@ -78,8 +78,19 @@
             </div>
           </div>
           <div class="row-2">
-            <div class="field"><label>Precio (MXN)</label><input class="input" id="pPrecio" type="number" min="0" required></div>
-            <div class="field"><label>Stock (unidades)</label><input class="input" id="pStock" type="number" min="0" required></div>
+            <div class="field"><label>Tallas</label>
+              <select class="input" id="pTallaTipo">
+                <option value="universal">Talla universal (sin tallas)</option>
+                <option value="tallas">Tiene tallas (CH · M · G · XG)</option>
+              </select>
+            </div>
+            <div class="field"><label>Precio (MXN)</label><input class="input" id="pPrecio" type="number" min="0"></div>
+          </div>
+          <div class="field" id="bloqueUniversal"><label>Stock (unidades)</label><input class="input" id="pStock" type="number" min="0"></div>
+          <div class="field" id="bloqueTallas" hidden>
+            <label>Inventario por talla</label>
+            <div id="tallasEditor"></div>
+            <p class="hint-foto">Activa las tallas que manejas y pon su stock. El precio por talla es opcional: si lo dejas vacío, usa el "Precio" de arriba.</p>
           </div>
           <div class="field"><label>Descripción</label><textarea class="input" id="pDesc" rows="3" placeholder="Describe el producto para el cliente…"></textarea></div>
           <div class="field"><label>Especificaciones (una por línea)</label><textarea class="input" id="pSpecs" rows="4" placeholder="Cuadro de aluminio&#10;Grupo Shimano&#10;Rodada 29&quot;"></textarea></div>
