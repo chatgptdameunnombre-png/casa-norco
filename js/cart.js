@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO } from "./config.js";
+import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO, COBRO_WEBHOOK } from "./config.js";
 
 const CART_KEY = "bici_cart";
 const $ = s => document.querySelector(s);
@@ -82,13 +82,21 @@ function checkout() {
   }).filter(Boolean).filter(i => i.qty > 0);
   if (!items.length) return;
   if (!entrega) { toast("Elige cómo lo recibes: <b>recoger</b> o <b>a domicilio</b>"); return; }
-  const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
-  const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
-  let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n`;
-  items.forEach(i => { msg += `• ${i.qty}× ${i.nombre} — ${money(i.precio * i.qty)}\n`; });
-  msg += entrega === "domicilio" ? `\nEnvío a domicilio: ${money(ENVIO_DOMICILIO)}` : `\nRecoger en tienda`;
-  msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
-  window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
+  const mpItems = items.map(i => ({ title: i.nombre, quantity: i.qty, unit_price: i.precio, currency_id: "MXN" }));
+  if (entrega === "domicilio") mpItems.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
+  const btn = $("#checkout");
+  if (btn) btn.disabled = true;
+  toast("Generando tu pago…");
+  fetch(COBRO_WEBHOOK, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items: mpItems, productos: items.map(i => ({ id: i.id, qty: i.qty, title: i.nombre })), entrega })
+  }).then(r => r.json()).then(data => {
+    if (data.link) { window.location.href = data.link; return; }
+    throw new Error("sin link");
+  }).catch(() => {
+    if (btn) btn.disabled = false;
+    toast("No se pudo generar el pago, intenta de nuevo");
+  });
 }
 
 const openDrawer = () => { $("#drawer")?.classList.add("open"); $("#overlay")?.classList.add("open"); };
