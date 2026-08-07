@@ -157,8 +157,14 @@ function montar() {
       });
       const d = await r.json();
       t.remove();
-      pintarBot(d.reply || "Perdón, no te entendí bien. ¿Me lo dices de otra forma?");
-      if (Array.isArray(d.ids) && d.ids.length) tarjetas(d.ids);
+      const reply = d.reply || "Perdón, no te entendí bien. ¿Me lo dices de otra forma?";
+      pintarBot(reply);
+      const idsMostrar = Array.isArray(d.ids) ? d.ids.slice() : [];
+      const low = reply.toLowerCase();
+      for (const p of productos) {
+        if (p.nombre && p.nombre.length >= 4 && low.includes(p.nombre.toLowerCase()) && !idsMostrar.includes(p.id)) idsMostrar.push(p.id);
+      }
+      if (idsMostrar.length) tarjetas(idsMostrar);
     } catch {
       t.remove();
       pintarBot("Uy, se me fue la señal 📶. Inténtalo de nuevo en un momento.");
