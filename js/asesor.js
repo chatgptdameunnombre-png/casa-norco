@@ -3,6 +3,7 @@ import { ASESOR_WEBHOOK, NEGOCIO } from "./config.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 const SID_KEY = "casanorco_asesor_sid";
+const SALUDO = "¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.";
 
 let productos = [];
 db.onProducts(list => { productos = list; });
@@ -32,7 +33,10 @@ function montar() {
         <div class="asesor-title">IA Casa Norco</div>
         <div class="asesor-sub">Te ayudo a encontrar tu bici o accesorio</div>
       </div>
-      <button class="asesor-x" type="button" aria-label="Cerrar">✕</button>
+      <div class="asesor-head-btns">
+        <button class="asesor-reset" type="button" aria-label="Empezar de nuevo" title="Empezar de nuevo">↻</button>
+        <button class="asesor-x" type="button" aria-label="Cerrar">✕</button>
+      </div>
     </div>
     <div class="asesor-body" id="asesorBody"></div>
     <form class="asesor-input" id="asesorForm">
@@ -57,13 +61,20 @@ function montar() {
     if (abierto) {
       if (!body.dataset.saludo) {
         body.dataset.saludo = "1";
-        pintarBot("¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.");
+        pintarBot(SALUDO);
       }
       setTimeout(() => input.focus(), 120);
     }
   };
   btn.addEventListener("click", toggle);
   panel.querySelector(".asesor-x").addEventListener("click", toggle);
+  panel.querySelector(".asesor-reset").addEventListener("click", () => {
+    localStorage.removeItem(SID_KEY);
+    body.innerHTML = "";
+    body.dataset.saludo = "1";
+    pintarBot(SALUDO);
+    setTimeout(() => input.focus(), 60);
+  });
 
   const drawer = document.getElementById("drawer");
   if (drawer) {
@@ -179,6 +190,9 @@ const CSS = `
   border-bottom:1px solid #26262c;background:linear-gradient(180deg,#1a1a1d,#141416)}
 .asesor-title{font-weight:800;font-size:15.5px}
 .asesor-sub{font-size:11.5px;color:#9a9aa2;margin-top:2px}
+.asesor-head-btns{display:flex;align-items:center;gap:4px}
+.asesor-reset{background:none;border:none;color:#9a9aa2;font-size:17px;cursor:pointer;line-height:1;padding:4px 6px;border-radius:8px}
+.asesor-reset:hover{color:#c6f032;background:#1e1e22}
 .asesor-x{background:none;border:none;color:#9a9aa2;font-size:18px;cursor:pointer;line-height:1;padding:4px}
 .asesor-x:hover{color:#f4f4f5}
 .asesor-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
