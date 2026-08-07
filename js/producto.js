@@ -1,6 +1,6 @@
 import { db, MODO } from "./db.js";
 import { setProductos, initCart, enCarrito } from "./cart.js";
-import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO } from "./config.js";
+import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO, COBRO_WEBHOOK } from "./config.js";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -104,7 +104,7 @@ function actualizarTotal() {
   else el.textContent = "";
 }
 
-function comprarDirecto() {
+async function comprarDirecto() {
   const p = productos.find(x => x.id === id);
   if (!p || p.stock <= 0) return;
   if (!entregaProd) {
@@ -112,12 +112,23 @@ function comprarDirecto() {
     if (el) { el.style.color = "#ff6b6b"; el.textContent = "Elige cómo lo quieres recibir: recoger o a domicilio"; }
     return;
   }
-  const envio = entregaProd === "domicilio";
-  const total = p.precio + (envio ? ENVIO_DOMICILIO : 0);
-  let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n• ${p.nombre} — ${money(p.precio)}\n`;
-  msg += envio ? `Envío a domicilio: ${money(ENVIO_DOMICILIO)}` : `Recoger en tienda`;
-  msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
-  window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
+  const btn = $("#buyNow");
+  if (btn) { btn.disabled = true; btn.textContent = "Generando pago…"; }
+  const items = [{ title: p.nombre, quantity: 1, unit_price: p.precio, currency_id: "MXN" }];
+  if (entregaProd === "domicilio") items.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
+  try {
+    const r = await fetch(COBRO_WEBHOOK, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, productos: [{ id: p.id, qty: 1, title: p.nombre }], entrega: entregaProd })
+    });
+    const data = await r.json();
+    if (data.link) { window.location.href = data.link; return; }
+    throw new Error("sin link");
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Comprar"; }
+    const el = $("#prodTotal");
+    if (el) { el.style.color = "#ff6b6b"; el.textContent = "No se pudo generar el pago, intenta de nuevo"; }
+  }
 }
 
 document.addEventListener("click", e => {
