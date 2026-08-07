@@ -3,7 +3,6 @@ import { ASESOR_WEBHOOK, NEGOCIO } from "./config.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 const SID_KEY = "casanorco_asesor_sid";
-const MAX_MSGS = 30;
 
 let productos = [];
 db.onProducts(list => { productos = list; });
@@ -14,7 +13,6 @@ function sessionId() {
   return s;
 }
 
-let enviados = 0;
 let abierto = false;
 
 function montar() {
@@ -81,8 +79,6 @@ function montar() {
     e.preventDefault();
     const txt = input.value.trim();
     if (!txt) return;
-    if (enviados >= MAX_MSGS) { pintarBot("Por hoy llegamos al límite del chat 🙏. Puedes seguir viendo el catálogo o escribirnos por WhatsApp."); return; }
-    enviados++;
     input.value = "";
     pintarUser(txt);
     enviar(txt);
