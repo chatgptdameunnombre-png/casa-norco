@@ -13,6 +13,7 @@ document.body.appendChild(badge);
 
 let productos = [];
 let fotosCache = null;
+let entregaProd = null;
 db.onProducts(async list => {
   productos = list;
   setProductos(list);
@@ -62,34 +63,56 @@ function render() {
         <h1 class="prod__name">${p.nombre}</h1>
         <div class="prod__price">${money(p.precio)} <span>MXN</span></div>
         <span class="stock stock--${st.cls}">${st.txt}</span>
-        <button class="add-btn add-btn--big" data-add="${p.id}" ${sinStock || tope ? "disabled" : ""}>
-          ${sinStock ? "Agotado" : tope ? "Ya está en tu carrito (máximo)" : "Agregar al carrito"}
-        </button>
-        <button class="add-btn add-btn--big" id="buyNow" ${sinStock ? "disabled" : ""} style="margin-top:10px;background:#25D366;color:#0a0a0a">
-          ${sinStock ? "Agotado" : "Comprar por WhatsApp"}
-        </button>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:14px">
-          <input type="checkbox" id="envioProd" style="width:18px;height:18px;accent-color:#c6f032"> Envío a domicilio (+${money(ENVIO_DOMICILIO)})
-        </label>
-        <div id="prodTotal" style="margin-top:8px;font-weight:600;color:#c6f032"></div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="add-btn add-btn--big" data-add="${p.id}" ${sinStock || tope ? "disabled" : ""} style="flex:1;margin:0">
+            ${sinStock ? "Agotado" : tope ? "Máximo" : "Agregar al carrito"}
+          </button>
+          <button class="add-btn add-btn--big" id="buyNow" ${sinStock ? "disabled" : ""} style="flex:1;margin:0;background:#c6f032;color:#0a0a0a">
+            ${sinStock ? "Agotado" : "Comprar"}
+          </button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button type="button" class="entrega-op" data-entrega="tienda" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏪 Recoger en tienda</button>
+          <button type="button" class="entrega-op" data-entrega="domicilio" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>
+        </div>
+        <div id="prodTotal" style="margin-top:10px;font-weight:600;color:#c6f032"></div>
         ${p.descripcion ? `<p class="prod__desc">${p.descripcion}</p>` : ""}
         ${specs}
       </div>
     </div>`;
   document.title = `${p.nombre} — Casa Norco`;
+  pintarEntrega();
+}
+
+function pintarEntrega() {
+  document.querySelectorAll(".entrega-op").forEach(b => {
+    const on = b.dataset.entrega === entregaProd;
+    b.style.borderColor = on ? "#c6f032" : "#2a2a30";
+    b.style.background = on ? "rgba(198,240,50,.12)" : "#17171b";
+    b.style.color = on ? "#c6f032" : "#f4f4f5";
+  });
+  actualizarTotal();
 }
 
 function actualizarTotal() {
   const p = productos.find(x => x.id === id);
   const el = $("#prodTotal");
   if (!p || !el) return;
-  el.textContent = $("#envioProd")?.checked ? `Total con envío: ${money(p.precio + ENVIO_DOMICILIO)}` : "";
+  el.style.color = "#c6f032";
+  if (entregaProd === "domicilio") el.textContent = `Total: ${money(p.precio + ENVIO_DOMICILIO)} (con envío)`;
+  else if (entregaProd === "tienda") el.textContent = `Total: ${money(p.precio)} (recoges en tienda)`;
+  else el.textContent = "";
 }
 
 function comprarDirecto() {
   const p = productos.find(x => x.id === id);
   if (!p || p.stock <= 0) return;
-  const envio = $("#envioProd")?.checked;
+  if (!entregaProd) {
+    const el = $("#prodTotal");
+    if (el) { el.style.color = "#ff6b6b"; el.textContent = "Elige cómo lo quieres recibir: recoger o a domicilio"; }
+    return;
+  }
+  const envio = entregaProd === "domicilio";
   const total = p.precio + (envio ? ENVIO_DOMICILIO : 0);
   let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n• ${p.nombre} — ${money(p.precio)}\n`;
   msg += envio ? `Envío a domicilio: ${money(ENVIO_DOMICILIO)}` : `Recoger en tienda`;
@@ -103,9 +126,10 @@ document.addEventListener("click", e => {
     $("#prodMainImg").src = th.dataset.thumb;
     document.querySelectorAll(".prod__thumb").forEach(t => t.classList.toggle("on", t === th));
   }
+  const eb = e.target.closest("[data-entrega]");
+  if (eb) { entregaProd = eb.dataset.entrega; pintarEntrega(); return; }
   if (e.target.closest("#buyNow")) comprarDirecto();
 });
-document.addEventListener("change", e => { if (e.target.id === "envioProd") actualizarTotal(); });
 document.addEventListener("cart:add", render);
 
 initCart();
