@@ -1,6 +1,7 @@
 import { db, MODO } from "./db.js";
 import { setProductos, initCart, enCarrito } from "./cart.js";
 import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO, COBRO_WEBHOOK } from "./config.js";
+import { iniciarPago } from "./checkout.js";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -112,23 +113,15 @@ async function comprarDirecto() {
     if (el) { el.style.color = "#ff6b6b"; el.textContent = "Elige cómo lo quieres recibir: recoger o a domicilio"; }
     return;
   }
-  const btn = $("#buyNow");
-  if (btn) { btn.disabled = true; btn.textContent = "Generando pago…"; }
   const items = [{ title: p.nombre, quantity: 1, unit_price: p.precio, currency_id: "MXN" }];
   if (entregaProd === "domicilio") items.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
-  try {
-    const r = await fetch(COBRO_WEBHOOK, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items, productos: [{ id: p.id, qty: 1, title: p.nombre }], entrega: entregaProd })
-    });
-    const data = await r.json();
-    if (data.link) { window.location.href = data.link; return; }
-    throw new Error("sin link");
-  } catch (e) {
-    if (btn) { btn.disabled = false; btn.textContent = "Comprar"; }
-    const el = $("#prodTotal");
-    if (el) { el.style.color = "#ff6b6b"; el.textContent = "No se pudo generar el pago, intenta de nuevo"; }
-  }
+  iniciarPago({
+    items, productos: [{ id: p.id, qty: 1, title: p.nombre }], entrega: entregaProd,
+    onError: () => {
+      const el = $("#prodTotal");
+      if (el) { el.style.color = "#ff6b6b"; el.textContent = "No se pudo generar el pago, intenta de nuevo"; }
+    }
+  });
 }
 
 document.addEventListener("click", e => {
