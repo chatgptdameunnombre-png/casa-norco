@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import { ASESOR_WEBHOOK, NEGOCIO } from "./config.js";
+import { tieneTallas, stockTotal, precioDesde, preciosVarian } from "./tallas.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 const SID_KEY = "casanorco_asesor_sid";
@@ -126,19 +127,27 @@ function montar() {
     const wrap = document.createElement("div");
     wrap.className = "asesor-cards";
     wrap.innerHTML = encontrados.map(p => {
-      const sinStock = p.stock <= 0;
+      const total = stockTotal(p);
+      const sinStock = total <= 0;
+      const sized = tieneTallas(p);
+      const precioTxt = preciosVarian(p) ? `desde ${money(precioDesde(p))}` : money(precioDesde(p));
       const foto = p.imagen
         ? `<img src="${p.imagen}" alt="${p.nombre}" onerror="this.style.display='none'">`
         : `<div class="ac-ph">📷</div>`;
+      const accion = sinStock
+        ? `<button class="ac-add" type="button" disabled>Agotado</button>`
+        : sized
+          ? `<a class="ac-add" href="producto.html?id=${encodeURIComponent(p.id)}" style="text-align:center;text-decoration:none;line-height:1.9">Elegir talla</a>`
+          : `<button class="ac-add" type="button" data-add="${p.id}">🛒 Agregar al carrito</button>`;
       return `
         <div class="ac-card">
           <div class="ac-media">${foto}${sinStock ? '<span class="ac-out">Agotado</span>' : ''}</div>
           <div class="ac-info">
             <div class="ac-name">${p.nombre}</div>
-            <div class="ac-price">${money(p.precio)} <span>MXN</span></div>
+            <div class="ac-price">${precioTxt} <span>MXN</span></div>
             <div class="ac-actions">
               <a class="ac-ver" href="producto.html?id=${encodeURIComponent(p.id)}">Ver</a>
-              <button class="ac-add" type="button" data-add="${p.id}" ${sinStock ? "disabled" : ""}>${sinStock ? "Agotado" : "🛒 Agregar al carrito"}</button>
+              ${accion}
             </div>
           </div>
         </div>`;
