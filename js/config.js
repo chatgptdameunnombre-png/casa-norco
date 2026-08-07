@@ -13,6 +13,8 @@ export const ENVIO_DOMICILIO = 380;
 
 export const COBRO_WEBHOOK = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-crear-pago";
 
+export const ASESOR_WEBHOOK = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-asesor";
+
 export const NEGOCIO = {
   nombre: "Casa Norco",
   claim: "Bicicletas premium, taller y café",
