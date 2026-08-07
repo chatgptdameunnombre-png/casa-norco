@@ -24,7 +24,7 @@ function montar() {
   btn.id = "asesorBtn";
   btn.type = "button";
   btn.setAttribute("aria-label", "Abrir IA de Casa Norco");
-  btn.innerHTML = `<span class="asesor-ico">💬</span><span class="asesor-lbl">IA Casa Norco</span>`;
+  btn.innerHTML = `<img class="asesor-logo" src="fotos/logo/iso-negro.png" alt=""><span class="asesor-lbl">IA Casa Norco</span>`;
 
   const panel = document.createElement("div");
   panel.id = "asesorPanel";
@@ -156,8 +156,8 @@ const CSS = `
   transition:transform .18s ease,box-shadow .18s ease}
 #asesorBtn:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(198,240,50,.35)}
 #asesorBtn.hide{transform:scale(.4);opacity:0;pointer-events:none}
-#asesorBtn .asesor-ico{font-size:19px;line-height:1}
-@media(max-width:520px){#asesorBtn .asesor-lbl{display:none}#asesorBtn{padding:15px}}
+#asesorBtn .asesor-logo{height:20px;width:auto;display:block}
+@media(max-width:520px){#asesorBtn .asesor-lbl{display:none}#asesorBtn{padding:14px 15px}}
 #asesorPanel{position:fixed;right:20px;bottom:20px;z-index:9999;width:380px;max-width:calc(100vw - 32px);
   height:560px;max-height:calc(100vh - 40px);background:#141416;border:1px solid #26262c;border-radius:20px;
   display:flex;flex-direction:column;overflow:hidden;font-family:inherit;color:#f4f4f5;
