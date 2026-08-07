@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Simulador de venta — Casa Norco (prueba)</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0a0a0b;color:#f4f4f5;font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;padding:28px 16px}
+  .wrap{max-width:520px;margin:0 auto}
+  .tag{display:inline-block;background:#c6f032;color:#0a0a0a;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:6px}
+  h1{font-size:22px;margin:14px 0 4px}
+  .sub{color:#9a9aa2;font-size:13.5px;margin:0 0 22px;line-height:1.5}
+  .card{background:#141416;border:1px solid #26262c;border-radius:16px;padding:20px}
+  label{display:block;font-size:12.5px;color:#c9c9cf;margin:14px 0 6px;font-weight:600}
+  input,select,textarea{width:100%;background:#0e0e11;border:1px solid #2a2a30;border-radius:11px;padding:12px 13px;color:#f4f4f5;font-size:14px;outline:none;font-family:inherit}
+  input:focus,select:focus,textarea:focus{border-color:#c6f032}
+  textarea{resize:vertical;min-height:64px}
+  .row{display:flex;gap:10px}
+  .ent{display:flex;gap:8px;margin-top:6px}
+  .ent button{flex:1;padding:11px;border-radius:11px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer;font-weight:600}
+  .ent button.on{border-color:#c6f032;background:rgba(198,240,50,.12);color:#c6f032}
+  #go{width:100%;margin-top:20px;background:#c6f032;color:#0a0a0a;border:none;border-radius:12px;padding:15px;font-weight:800;font-size:15px;cursor:pointer;letter-spacing:.3px}
+  #go:disabled{opacity:.6;cursor:wait}
+  #tot{margin-top:12px;color:#c6f032;font-weight:700;font-size:14px;min-height:18px}
+  #res{margin-top:18px;display:none}
+  .ok{background:#0f1a0a;border:1px solid #2f5a12;border-radius:14px;padding:16px}
+  .ok h3{margin:0 0 12px;color:#c6f032;font-size:15px}
+  .chk{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;margin:8px 0;line-height:1.45}
+  .chk b{color:#fff}
+  .err{background:#1a0d0d;border:1px solid #5a2020;color:#ff9b9b;border-radius:14px;padding:16px;font-size:13.5px}
+  .foot{color:#6a6a72;font-size:11.5px;margin-top:18px;text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="tag">Prueba interna · sin pago real</span>
+  <h1>Simulador de venta</h1>
+  <p class="sub">Prueba el flujo completo <b>sin tocar Mercado Pago</b>: baja el stock, registra la venta en la nube y te manda el mensaje a Telegram con la dirección. Úsalo para comprobar que todo jala.</p>
+
+  <div class="card">
+    <label for="prod">Producto</label>
+    <select id="prod"><option>Cargando catálogo…</option></select>
+
+    <div class="row">
+      <div style="flex:1">
+        <label for="qty">Cantidad</label>
+        <input id="qty" type="number" min="1" value="1">
+      </div>
+      <div style="flex:2">
+        <label for="tel">Teléfono del cliente</label>
+        <input id="tel" inputmode="tel" placeholder="33 1234 5678">
+      </div>
+    </div>
+
+    <label for="nom">Nombre del cliente</label>
+    <input id="nom" placeholder="Nombre y apellido" value="Cliente Prueba">
+
+    <label>Entrega</label>
+    <div class="ent">
+      <button type="button" data-ent="tienda" class="on">🏪 Recoger en tienda</button>
+      <button type="button" data-ent="domicilio">🏠 A domicilio (+$380)</button>
+    </div>
+
+    <div id="dirBox" style="display:none">
+      <label for="dir">Dirección de entrega</label>
+      <textarea id="dir" placeholder="Calle y número, colonia, ciudad, estado, C.P., referencias"></textarea>
+    </div>
+
+    <div id="tot"></div>
+    <button id="go">Simular venta</button>
+  </div>
+
+  <div id="res"></div>
+  <p class="foot">Casa Norco · esta página es solo para pruebas. Cuando arranque producción, la venta la dispara Mercado Pago al aprobar el pago.</p>
+</div>
+
+<script type="module">
+const WEBHOOK="https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-pago-ok";
+const PROJ="bici-shop-demo", KEY="AIzaSyDeKk6Hr-3-nDDIVwh3fi5OIPUZJo5XKPY";
+const ENVIO=380;
+const $=s=>document.querySelector(s);
+const money=n=>"$"+Number(n).toLocaleString("es-MX");
+let productos=[], entrega="tienda";
+
+async function cargar(){
+  const url=`https://firestore.googleapis.com/v1/projects/${PROJ}/databases/(default)/documents/productos?mask.fieldPaths=nombre&mask.fieldPaths=precio&mask.fieldPaths=stock&pageSize=300`;
+  const d=await (await fetch(url)).json();
+  productos=(d.documents||[]).map(doc=>{
+    const f=doc.fields;
+    return {id:doc.name.split("/").pop(), nombre:f.nombre?.stringValue||"", precio:+(f.precio?.integerValue||f.precio?.doubleValue||0), stock:+(f.stock?.integerValue||0)};
+  }).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const sel=$("#prod");
+  sel.innerHTML=productos.map(p=>`<option value="${p.id}">${p.nombre} — ${money(p.precio)} (stock ${p.stock})</option>`).join("");
+  actualizar();
+}
+function prodSel(){ return productos.find(p=>p.id===$("#prod").value); }
+function actualizar(){
+  const p=prodSel(); if(!p) return;
+  const qty=Math.max(1,+$("#qty").value||1);
+  const tot=p.precio*qty+(entrega==="domicilio"?ENVIO:0);
+  $("#tot").textContent=`Total: ${money(tot)}${entrega==="domicilio"?" (incluye envío $380)":""}`;
+}
+document.querySelectorAll("[data-ent]").forEach(b=>b.onclick=()=>{
+  entrega=b.dataset.ent;
+  document.querySelectorAll("[data-ent]").forEach(x=>x.classList.toggle("on",x===b));
+  $("#dirBox").style.display=entrega==="domicilio"?"block":"none";
+  actualizar();
+});
+$("#prod").onchange=actualizar; $("#qty").oninput=actualizar;
+
+$("#go").onclick=async()=>{
+  const p=prodSel(); if(!p) return;
+  const qty=Math.max(1,+$("#qty").value||1);
+  const nombre=$("#nom").value.trim()||"Cliente Prueba";
+  const tel=$("#tel").value.trim();
+  const dir=$("#dir").value.trim();
+  if(entrega==="domicilio" && !dir){ $("#dir").focus(); return; }
+  const total=p.precio*qty+(entrega==="domicilio"?ENVIO:0);
+  $("#go").disabled=true; $("#go").textContent="Procesando…"; $("#res").style.display="none";
+  try{
+    const r=await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      test:true, total, ref:"PRUEBA-WEB",
+      metadata:{ entrega, productos:[{id:p.id,qty,title:p.nombre}], cliente:nombre, telefono:tel, direccion:entrega==="domicilio"?dir:"" }
+    })});
+    const d=await r.json();
+    const bajado=(d.stock_bajado||[]).join(", ")||"(sin cambio)";
+    $("#res").innerHTML=`<div class="ok">
+      <h3>✅ Venta simulada correctamente</h3>
+      <div class="chk">📉 <span>Stock: <b>${bajado}</b></span></div>
+      <div class="chk">☁️ <span>Registrada en la nube: <b>${d.registro==="ok"?"sí":d.registro}</b></span></div>
+      <div class="chk">📲 <span>Mensaje a tu Telegram: <b>${d.telegram==="ok"?"enviado":d.telegram}</b></span></div>
+      <div class="chk">📍 <span>Dirección leída: <b>${d.direccion||"(recoger en tienda)"}</b></span></div>
+      <div class="chk">💰 <span>Total: <b>${money(d.total||total)}</b></span></div>
+    </div>`;
+    $("#res").style.display="block";
+    cargar();
+  }catch(e){
+    $("#res").innerHTML=`<div class="err">No se pudo. Revisa tu internet e inténtalo de nuevo.</div>`;
+    $("#res").style.display="block";
+  }
+  $("#go").disabled=false; $("#go").textContent="Simular venta";
+};
+
+cargar();
+</script>
+</body>
+</html>
