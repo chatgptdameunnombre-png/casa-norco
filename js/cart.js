@@ -1,5 +1,6 @@
-import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO, COBRO_WEBHOOK } from "./config.js";
+import { ENVIO_DOMICILIO } from "./config.js";
 import { iniciarPago } from "./checkout.js";
+import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js";
 
 const CART_KEY = "bici_cart";
 const $ = s => document.querySelector(s);
@@ -8,6 +9,8 @@ const money = n => "$" + Number(n).toLocaleString("es-MX");
 let cart = cargar();
 let productos = [];
 let entrega = null;
+
+const keyOf = (id, talla) => (talla ? `${id}__${talla}` : id);
 
 function cargar() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; }
@@ -19,26 +22,52 @@ function guardar() {
 }
 
 export function setProductos(list) { productos = list; renderCart(); }
-export function enCarrito(id) { return cart[id]?.qty || 0; }
 
-export function addCart(id) {
+export function enCarrito(id, talla = null) {
   const p = productos.find(x => x.id === id);
-  if (!p || p.stock <= 0) return;
-  const q = cart[id]?.qty || 0;
-  if (q >= p.stock) return;
-  cart[id] = { id, qty: q + 1 };
+  const t = (p && tieneTallas(p)) ? talla : null;
+  return cart[keyOf(id, t)]?.qty || 0;
+}
+
+function dispDe(p, talla) {
+  return (tieneTallas(p) && talla) ? stockDeTalla(p, talla) : stockTotal(p);
+}
+function precioDe(p, talla) {
+  return (tieneTallas(p) && talla) ? precioTalla(p, talla) : Number(p.precio || 0);
+}
+
+export function addCart(id, talla = null) {
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  const sized = tieneTallas(p);
+  const t = sized ? talla : null;
+  if (sized && !t) return;
+  const disp = dispDe(p, t);
+  if (disp <= 0) return;
+  const k = keyOf(id, t);
+  const q = cart[k]?.qty || 0;
+  if (q >= disp) return;
+  cart[k] = { id, talla: t, qty: q + 1 };
   guardar();
-  toast(`<b>${p.nombre}</b> agregado`);
+  toast(`<b>${p.nombre}${t ? " — Talla " + t : ""}</b> agregado`);
   openDrawer();
   document.dispatchEvent(new CustomEvent("cart:add", { detail: { id } }));
 }
 
-export function renderCart() {
-  const items = Object.values(cart).map(c => {
+function itemsCarrito() {
+  return Object.entries(cart).map(([k, c]) => {
     const p = productos.find(x => x.id === c.id);
-    return p ? { ...p, qty: Math.min(c.qty, p.stock) } : null;
-  }).filter(Boolean).filter(i => i.qty > 0);
+    if (!p) return null;
+    const t = tieneTallas(p) ? (c.talla || null) : null;
+    const disp = dispDe(p, t);
+    const qty = Math.min(c.qty, disp);
+    if (qty <= 0) return null;
+    return { key: k, id: c.id, talla: t, nombre: p.nombre, imagen: p.imagen, precio: precioDe(p, t), qty, disp };
+  }).filter(Boolean);
+}
 
+export function renderCart() {
+  const items = itemsCarrito();
   const count = items.reduce((a, i) => a + i.qty, 0);
   const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
   const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
@@ -56,15 +85,15 @@ export function renderCart() {
     <div class="line">
       <img class="line__img" src="${i.imagen || ''}" alt="" onerror="this.style.visibility='hidden'">
       <div class="line__info">
-        <div class="line__name">${i.nombre}</div>
+        <div class="line__name">${i.nombre}${i.talla ? ` <small style="color:#9a9aa2">· Talla ${i.talla}</small>` : ""}</div>
         <div class="line__price">${money(i.precio)}</div>
         <div class="qty">
-          <button data-dec="${i.id}">−</button>
+          <button data-dec="${i.key}">−</button>
           <span>${i.qty}</span>
-          <button data-inc="${i.id}" ${i.qty >= i.stock ? "disabled" : ""}>+</button>
+          <button data-inc="${i.key}" ${i.qty >= i.disp ? "disabled" : ""}>+</button>
         </div>
       </div>
-      <button class="line__rm" data-rm="${i.id}">Quitar</button>
+      <button class="line__rm" data-rm="${i.key}">Quitar</button>
     </div>`).join("");
   $("#cartTotal").textContent = money(total);
   document.querySelectorAll(".entrega-cart").forEach(b => {
@@ -77,16 +106,15 @@ export function renderCart() {
 }
 
 function checkout() {
-  const items = Object.values(cart).map(c => {
-    const p = productos.find(x => x.id === c.id);
-    return p ? { ...p, qty: Math.min(c.qty, p.stock) } : null;
-  }).filter(Boolean).filter(i => i.qty > 0);
+  const items = itemsCarrito();
   if (!items.length) return;
   if (!entrega) { toast("Elige cómo lo recibes: <b>recoger</b> o <b>a domicilio</b>"); return; }
-  const mpItems = items.map(i => ({ title: i.nombre, quantity: i.qty, unit_price: i.precio, currency_id: "MXN" }));
+  const mpItems = items.map(i => ({ title: i.talla ? `${i.nombre} — Talla ${i.talla}` : i.nombre, quantity: i.qty, unit_price: i.precio, currency_id: "MXN" }));
   if (entrega === "domicilio") mpItems.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
   iniciarPago({
-    items: mpItems, productos: items.map(i => ({ id: i.id, qty: i.qty, title: i.nombre })), entrega,
+    items: mpItems,
+    productos: items.map(i => ({ id: i.id, qty: i.qty, title: i.nombre, talla: i.talla || "" })),
+    entrega,
     onError: () => toast("No se pudo generar el pago, intenta de nuevo")
   });
 }
@@ -111,8 +139,14 @@ export function initCart() {
     if (!t) return;
     e.preventDefault();
     if (t.dataset.add) addCart(t.dataset.add);
-    else if (t.dataset.inc) { cart[t.dataset.inc].qty++; guardar(); }
-    else if (t.dataset.dec) { const id = t.dataset.dec; cart[id].qty--; if (cart[id].qty <= 0) delete cart[id]; guardar(); }
+    else if (t.dataset.inc) {
+      const c = cart[t.dataset.inc];
+      if (!c) return;
+      const p = productos.find(x => x.id === c.id);
+      const disp = p ? dispDe(p, tieneTallas(p) ? c.talla : null) : 0;
+      if (c.qty < disp) { c.qty++; guardar(); }
+    }
+    else if (t.dataset.dec) { const k = t.dataset.dec; if (!cart[k]) return; cart[k].qty--; if (cart[k].qty <= 0) delete cart[k]; guardar(); }
     else if (t.dataset.rm) { delete cart[t.dataset.rm]; guardar(); }
   });
   $("#openCart")?.addEventListener("click", openDrawer);
