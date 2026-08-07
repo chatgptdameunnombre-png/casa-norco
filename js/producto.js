@@ -1,7 +1,8 @@
 import { db, MODO } from "./db.js";
-import { setProductos, initCart, enCarrito } from "./cart.js";
-import { WHATSAPP_NUMERO, NEGOCIO, ENVIO_DOMICILIO, COBRO_WEBHOOK } from "./config.js";
+import { setProductos, initCart, enCarrito, addCart } from "./cart.js";
+import { ENVIO_DOMICILIO } from "./config.js";
 import { iniciarPago } from "./checkout.js";
+import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -15,6 +16,8 @@ document.body.appendChild(badge);
 let productos = [];
 let fotosCache = null;
 let entregaProd = null;
+let tallaSel = null;
+
 db.onProducts(async list => {
   productos = list;
   setProductos(list);
@@ -24,10 +27,12 @@ db.onProducts(async list => {
   render();
 });
 
-function stockInfo(s) {
-  if (s <= 0) return { cls: "out", txt: "Agotado" };
-  if (s <= 3) return { cls: "low", txt: `Últimas ${s} piezas` };
-  return { cls: "ok", txt: "Disponible" };
+function tallaBtn(t, on) {
+  const ag = Number(t.stock) <= 0;
+  const color = ag ? "#7a7a82" : (on ? "#c6f032" : "#f4f4f5");
+  const borde = on ? "#c6f032" : "#2a2a30";
+  const fondo = on ? "rgba(198,240,50,.12)" : "#17171b";
+  return `<button type="button" class="talla-btn" data-talla="${t.talla}" style="min-width:48px;padding:9px 13px;border-radius:11px;border:1px solid ${borde};background:${fondo};color:${color};cursor:pointer;font-weight:800;${ag ? "text-decoration:line-through" : ""}">${t.talla}</button>`;
 }
 
 function render() {
@@ -39,10 +44,17 @@ function render() {
     cont.innerHTML = `<div class="prod-404"><h2>Producto no encontrado</h2><a href="index.html" class="btn">← Volver a la tienda</a></div>`;
     return;
   }
+  const sized = tieneTallas(p);
+  const stockActual = sized ? (tallaSel ? stockDeTalla(p, tallaSel) : stockTotal(p)) : stockTotal(p);
+  const precioActual = sized ? (tallaSel ? precioTalla(p, tallaSel) : precioDesde(p)) : Number(p.precio || 0);
+  const st = etiquetaStock(stockActual);
+  const puede = sized ? (!!tallaSel && stockDeTalla(p, tallaSel) > 0) : stockActual > 0;
+  const precioLinea = (sized && !tallaSel && preciosVarian(p)) ? `desde ${money(precioDesde(p))}` : money(precioActual);
+  const labelAdd = (sized && !tallaSel) ? "Elige tu talla" : (puede ? (enCarrito(p.id, sized ? tallaSel : null) >= stockActual ? "Máximo" : "Agregar al carrito") : "Agotado");
+  const labelBuy = (sized && !tallaSel) ? "Elige tu talla" : (puede ? "Comprar" : "Agotado");
+  const topeAdd = puede && enCarrito(p.id, sized ? tallaSel : null) >= stockActual;
+
   const fotos = fotosCache?.length ? fotosCache : (p.imagenes?.length ? p.imagenes : (p.imagen ? [p.imagen] : []));
-  const st = stockInfo(p.stock);
-  const sinStock = p.stock <= 0;
-  const tope = enCarrito(p.id) >= p.stock;
   const volver = p.categoria === "Bicicletas" ? "bicicletas.html" : "accesorios.html";
 
   const galeria = fotos.length
@@ -55,6 +67,11 @@ function render() {
     ? `<h4 class="prod__spectitle">Especificaciones</h4><ul class="prod__specs">${p.specs.map(s => `<li>${s}</li>`).join("")}</ul>`
     : "";
 
+  const tallasBloque = sized
+    ? `<div style="margin:12px 0 4px;font-size:13px;color:#c9c9cf;font-weight:600">Talla${tallaSel ? ": " + tallaSel : ""}</div>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">${tallasDe(p).map(t => tallaBtn(t, t.talla === tallaSel)).join("")}</div>`
+    : `<div style="margin:8px 0 2px;font-size:12.5px;color:#9a9aa2">Talla universal</div>`;
+
   cont.innerHTML = `
     <a href="${volver}" class="volver">← ${p.categoria}</a>
     <div class="prod">
@@ -62,15 +79,12 @@ function render() {
       <div class="prod__info">
         <span class="prod__brand">${p.marca}${p.subcategoria ? " · " + p.subcategoria : ""}</span>
         <h1 class="prod__name">${p.nombre}</h1>
-        <div class="prod__price">${money(p.precio)} <span>MXN</span></div>
+        <div class="prod__price">${precioLinea} <span>MXN</span></div>
         <span class="stock stock--${st.cls}">${st.txt}</span>
-        <div style="display:flex;gap:10px;margin-top:6px">
-          <button class="add-btn add-btn--big" data-add="${p.id}" ${sinStock || tope ? "disabled" : ""} style="flex:1;margin:0">
-            ${sinStock ? "Agotado" : tope ? "Máximo" : "Agregar al carrito"}
-          </button>
-          <button class="add-btn add-btn--big" id="buyNow" ${sinStock ? "disabled" : ""} style="flex:1;margin:0;background:#c6f032;color:#0a0a0a">
-            ${sinStock ? "Agotado" : "Comprar"}
-          </button>
+        ${tallasBloque}
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button class="add-btn add-btn--big" id="addBtn2" ${puede && !topeAdd ? "" : "disabled"} style="flex:1;margin:0">${labelAdd}</button>
+          <button class="add-btn add-btn--big" id="buyNow" ${puede ? "" : "disabled"} style="flex:1;margin:0;background:#c6f032;color:#0a0a0a">${labelBuy}</button>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button type="button" class="entrega-op" data-entrega="tienda" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏪 Recoger en tienda</button>
@@ -95,32 +109,52 @@ function pintarEntrega() {
   actualizarTotal();
 }
 
+function precioSel(p) {
+  const sized = tieneTallas(p);
+  return sized ? (tallaSel ? precioTalla(p, tallaSel) : precioDesde(p)) : Number(p.precio || 0);
+}
+
 function actualizarTotal() {
   const p = productos.find(x => x.id === id);
   const el = $("#prodTotal");
   if (!p || !el) return;
   el.style.color = "#c6f032";
-  if (entregaProd === "domicilio") el.textContent = `Total: ${money(p.precio + ENVIO_DOMICILIO)} (con envío)`;
-  else if (entregaProd === "tienda") el.textContent = `Total: ${money(p.precio)} (recoges en tienda)`;
+  const base = precioSel(p);
+  if (entregaProd === "domicilio") el.textContent = `Total: ${money(base + ENVIO_DOMICILIO)} (con envío)`;
+  else if (entregaProd === "tienda") el.textContent = `Total: ${money(base)} (recoges en tienda)`;
   else el.textContent = "";
 }
 
-async function comprarDirecto() {
+function err(txt) {
+  const el = $("#prodTotal");
+  if (el) { el.style.color = "#ff6b6b"; el.textContent = txt; }
+}
+
+function agregar() {
   const p = productos.find(x => x.id === id);
-  if (!p || p.stock <= 0) return;
-  if (!entregaProd) {
-    const el = $("#prodTotal");
-    if (el) { el.style.color = "#ff6b6b"; el.textContent = "Elige cómo lo quieres recibir: recoger o a domicilio"; }
-    return;
-  }
-  const items = [{ title: p.nombre, quantity: 1, unit_price: p.precio, currency_id: "MXN" }];
+  if (!p) return;
+  const sized = tieneTallas(p);
+  if (sized && !tallaSel) { err("Elige tu talla"); return; }
+  addCart(p.id, sized ? tallaSel : null);
+}
+
+function comprarDirecto() {
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  const sized = tieneTallas(p);
+  if (sized && !tallaSel) { err("Elige tu talla"); return; }
+  const stock = sized ? stockDeTalla(p, tallaSel) : stockTotal(p);
+  if (stock <= 0) return;
+  if (!entregaProd) { err("Elige cómo lo quieres recibir: recoger o a domicilio"); return; }
+  const precio = precioSel(p);
+  const title = sized ? `${p.nombre} — Talla ${tallaSel}` : p.nombre;
+  const items = [{ title, quantity: 1, unit_price: precio, currency_id: "MXN" }];
   if (entregaProd === "domicilio") items.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
   iniciarPago({
-    items, productos: [{ id: p.id, qty: 1, title: p.nombre }], entrega: entregaProd,
-    onError: () => {
-      const el = $("#prodTotal");
-      if (el) { el.style.color = "#ff6b6b"; el.textContent = "No se pudo generar el pago, intenta de nuevo"; }
-    }
+    items,
+    productos: [{ id: p.id, qty: 1, title: p.nombre, talla: sized ? tallaSel : "" }],
+    entrega: entregaProd,
+    onError: () => err("No se pudo generar el pago, intenta de nuevo")
   });
 }
 
@@ -129,9 +163,13 @@ document.addEventListener("click", e => {
   if (th) {
     $("#prodMainImg").src = th.dataset.thumb;
     document.querySelectorAll(".prod__thumb").forEach(t => t.classList.toggle("on", t === th));
+    return;
   }
+  const tb = e.target.closest(".talla-btn");
+  if (tb) { tallaSel = tb.dataset.talla; render(); return; }
   const eb = e.target.closest("[data-entrega]");
   if (eb) { entregaProd = eb.dataset.entrega; pintarEntrega(); return; }
+  if (e.target.closest("#addBtn2")) { agregar(); return; }
   if (e.target.closest("#buyNow")) comprarDirecto();
 });
 document.addEventListener("cart:add", render);
