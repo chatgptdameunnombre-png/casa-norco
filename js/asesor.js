@@ -67,6 +67,16 @@ function montar() {
   btn.addEventListener("click", toggle);
   panel.querySelector(".asesor-x").addEventListener("click", toggle);
 
+  const drawer = document.getElementById("drawer");
+  if (drawer) {
+    const sync = () => {
+      const abierto = drawer.classList.contains("open");
+      btn.classList.toggle("cart-abierto", abierto);
+      panel.classList.toggle("cart-abierto", abierto);
+    };
+    new MutationObserver(sync).observe(drawer, { attributes: true, attributeFilter: ["class"] });
+  }
+
   form.addEventListener("submit", e => {
     e.preventDefault();
     const txt = input.value.trim();
@@ -153,7 +163,12 @@ const CSS = `
 #asesorBtn{position:fixed;right:20px;bottom:20px;z-index:9998;display:flex;align-items:center;gap:9px;
   background:#c6f032;color:#0a0a0a;border:none;border-radius:999px;padding:13px 20px 13px 16px;
   font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.35);
-  transition:transform .18s ease,box-shadow .18s ease}
+  transition:transform .18s ease,box-shadow .18s ease,right .34s cubic-bezier(.2,.7,.2,1)}
+#asesorBtn.cart-abierto{right:460px}
+#asesorPanel.cart-abierto{right:460px}
+@media(max-width:900px){
+  #asesorBtn.cart-abierto,#asesorPanel.cart-abierto{opacity:0;pointer-events:none;transform:translateY(16px)}
+}
 #asesorBtn:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(198,240,50,.35)}
 #asesorBtn.hide{transform:scale(.4);opacity:0;pointer-events:none}
 #asesorBtn .asesor-logo{height:20px;width:auto;display:block}
@@ -162,7 +177,7 @@ const CSS = `
   height:560px;max-height:calc(100vh - 40px);background:#141416;border:1px solid #26262c;border-radius:20px;
   display:flex;flex-direction:column;overflow:hidden;font-family:inherit;color:#f4f4f5;
   box-shadow:0 24px 70px rgba(0,0,0,.55);opacity:0;transform:translateY(16px) scale(.98);pointer-events:none;
-  transition:opacity .2s ease,transform .2s ease}
+  transition:opacity .2s ease,transform .2s ease,right .34s cubic-bezier(.2,.7,.2,1)}
 #asesorPanel.open{opacity:1;transform:none;pointer-events:auto}
 .asesor-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;
   border-bottom:1px solid #26262c;background:linear-gradient(180deg,#1a1a1d,#141416)}
