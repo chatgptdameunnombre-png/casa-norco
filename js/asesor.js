@@ -23,15 +23,15 @@ function montar() {
   const btn = document.createElement("button");
   btn.id = "asesorBtn";
   btn.type = "button";
-  btn.setAttribute("aria-label", "Abrir asesor de Casa Norco");
-  btn.innerHTML = `<span class="asesor-ico">💬</span><span class="asesor-lbl">Asesor Casa Norco</span>`;
+  btn.setAttribute("aria-label", "Abrir IA de Casa Norco");
+  btn.innerHTML = `<span class="asesor-ico">💬</span><span class="asesor-lbl">IA Casa Norco</span>`;
 
   const panel = document.createElement("div");
   panel.id = "asesorPanel";
   panel.innerHTML = `
     <div class="asesor-head">
       <div>
-        <div class="asesor-title">Asesor Casa Norco</div>
+        <div class="asesor-title">IA Casa Norco</div>
         <div class="asesor-sub">Te ayudo a encontrar tu bici o accesorio</div>
       </div>
       <button class="asesor-x" type="button" aria-label="Cerrar">✕</button>
@@ -59,7 +59,7 @@ function montar() {
     if (abierto) {
       if (!body.dataset.saludo) {
         body.dataset.saludo = "1";
-        pintarBot("¡Hola! 👋 Soy tu asesor de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.");
+        pintarBot("¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.");
       }
       setTimeout(() => input.focus(), 120);
     }
