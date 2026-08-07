@@ -63,6 +63,36 @@ function poblarSub(categoria, seleccion = "") {
 }
 $("#pCategoria").addEventListener("change", e => poblarSub(e.target.value));
 
+/* ---------- tallas ---------- */
+const TALLAS = ["CH", "M", "G", "XG"];
+function aplicarTallaTipo(tipo) {
+  const conTallas = tipo === "tallas";
+  $("#bloqueTallas").hidden = !conTallas;
+  $("#bloqueUniversal").hidden = conTallas;
+}
+function buildTallasEditor(tallas = []) {
+  const map = {};
+  (tallas || []).forEach(t => { map[t.talla] = t; });
+  $("#tallasEditor").innerHTML = TALLAS.map(t => {
+    const on = !!map[t];
+    const st = on ? (map[t].stock ?? "") : "";
+    const pr = on && Number(map[t].precio) > 0 ? map[t].precio : "";
+    return `<div class="talla-row" data-talla="${t}" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      <label style="display:flex;gap:6px;align-items:center;min-width:64px;margin:0"><input type="checkbox" class="t-on" ${on ? "checked" : ""}> <b>${t}</b></label>
+      <input class="input t-stock" type="number" min="0" placeholder="stock" value="${st}" ${on ? "" : "disabled"} style="flex:1">
+      <input class="input t-precio" type="number" min="0" placeholder="precio (opcional)" value="${pr}" ${on ? "" : "disabled"} style="flex:1">
+    </div>`;
+  }).join("");
+}
+$("#pTallaTipo").addEventListener("change", e => aplicarTallaTipo(e.target.value));
+$("#tallasEditor").addEventListener("change", e => {
+  const cb = e.target.closest(".t-on");
+  if (!cb) return;
+  const row = cb.closest(".talla-row");
+  row.querySelector(".t-stock").disabled = !cb.checked;
+  row.querySelector(".t-precio").disabled = !cb.checked;
+});
+
 /* ---------- fotos: subir + comprimir ---------- */
 function comprimirImagen(file, size = 1000, calidad = 0.82) {
   return new Promise((resolve, reject) => {
@@ -116,6 +146,9 @@ function nuevo() {
   $("#pId").value = "";
   fotosActuales = [];
   poblarSub("");
+  $("#pTallaTipo").value = "universal";
+  aplicarTallaTipo("universal");
+  buildTallasEditor([]);
   renderFotos();
   abrir();
 }
@@ -130,6 +163,10 @@ function editar(id) {
   poblarSub($("#pCategoria").value, p.subcategoria || "");
   $("#pPrecio").value = p.precio;
   $("#pStock").value = p.stock;
+  const tipo = p.tallaTipo === "tallas" ? "tallas" : "universal";
+  $("#pTallaTipo").value = tipo;
+  aplicarTallaTipo(tipo);
+  buildTallasEditor(p.tallas || []);
   $("#pDesc").value = p.descripcion || "";
   $("#pSpecs").value = (p.specs || []).join("\n");
   fotosActuales = p.imagenes?.length ? [...p.imagenes] : (p.imagen ? [p.imagen] : []);
@@ -150,18 +187,37 @@ $("#prodForm").addEventListener("submit", async e => {
     return;
   }
   const id = $("#pId").value;
+  const tipo = $("#pTallaTipo").value === "tallas" ? "tallas" : "universal";
   const data = {
     nombre: $("#pNombre").value.trim(),
     marca: $("#pMarca").value.trim(),
     categoria: $("#pCategoria").value,
     subcategoria: $("#pSub").value,
-    precio: Number($("#pPrecio").value),
-    stock: Number($("#pStock").value),
+    precio: Number($("#pPrecio").value) || 0,
     descripcion: $("#pDesc").value.trim(),
     specs: $("#pSpecs").value.split("\n").map(s => s.trim()).filter(Boolean),
     imagenes,
-    imagen: imagenes[0] || ""
+    imagen: imagenes[0] || "",
+    tallaTipo: tipo
   };
+  if (tipo === "tallas") {
+    const tallas = [];
+    document.querySelectorAll("#tallasEditor .talla-row").forEach(row => {
+      if (row.querySelector(".t-on").checked) {
+        tallas.push({
+          talla: row.dataset.talla,
+          stock: Number(row.querySelector(".t-stock").value) || 0,
+          precio: Number(row.querySelector(".t-precio").value) || 0
+        });
+      }
+    });
+    if (!tallas.length) { toast("Activa al menos una talla o cámbialo a universal."); return; }
+    data.tallas = tallas;
+    data.stock = tallas.reduce((a, t) => a + t.stock, 0);
+  } else {
+    data.tallas = [];
+    data.stock = Number($("#pStock").value) || 0;
+  }
   try {
     if (id) await db.updateProduct(id, data);
     else await db.addProduct(data);
