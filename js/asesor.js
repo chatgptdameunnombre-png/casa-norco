@@ -131,7 +131,7 @@ function montar() {
             <div class="ac-price">${money(p.precio)} <span>MXN</span></div>
             <div class="ac-actions">
               <a class="ac-ver" href="producto.html?id=${encodeURIComponent(p.id)}">Ver</a>
-              <button class="ac-add" type="button" data-add="${p.id}" ${sinStock ? "disabled" : ""}>${sinStock ? "Agotado" : "Agregar"}</button>
+              <button class="ac-add" type="button" data-add="${p.id}" ${sinStock ? "disabled" : ""}>${sinStock ? "Agotado" : "🛒 Agregar al carrito"}</button>
             </div>
           </div>
         </div>`;
@@ -203,9 +203,9 @@ const CSS = `
 .ac-name{font-weight:700;font-size:13px;line-height:1.25}
 .ac-price{font-size:13px;font-weight:800;color:#c6f032}.ac-price span{font-size:10px;color:#9a9aa2;font-weight:600}
 .ac-actions{display:flex;gap:7px;margin-top:auto}
-.ac-ver{flex:1;text-align:center;text-decoration:none;padding:7px;border-radius:9px;border:1px solid #2a2a30;color:#f4f4f5;font-size:12px;font-weight:700}
+.ac-ver{flex:0 0 auto;text-align:center;text-decoration:none;padding:8px 14px;border-radius:9px;border:1px solid #2a2a30;color:#f4f4f5;font-size:12px;font-weight:700}
 .ac-ver:hover{border-color:#c6f032;color:#c6f032}
-.ac-add{flex:1.4;padding:7px;border-radius:9px;border:none;background:#c6f032;color:#0a0a0a;font-size:12px;font-weight:800;cursor:pointer}
+.ac-add{flex:1;padding:8px 6px;border-radius:9px;border:none;background:#c6f032;color:#0a0a0a;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
 .ac-add:disabled{background:#2a2a30;color:#7a7a82;cursor:not-allowed}
 .asesor-input{display:flex;gap:8px;padding:12px;border-top:1px solid #26262c;background:#141416}
 .asesor-input input{flex:1;background:#0e0e11;border:1px solid #2a2a30;border-radius:11px;padding:11px 13px;color:#f4f4f5;font-size:13.5px;outline:none}
