@@ -34,11 +34,15 @@ function abrirModal(onConfirm, onCancel) {
       <p style="margin:0 0 16px;font-size:13px;color:#9a9aa2">Envío a domicilio (+${money(ENVIO_DOMICILIO)}). Llena tus datos para la entrega.</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <input id="dNombre" placeholder="Nombre completo" ${inp()}>
-        <input id="dTel" placeholder="Teléfono (WhatsApp)" inputmode="tel" ${inp()}>
+        <input id="dTel" placeholder="Teléfono" inputmode="tel" ${inp()}>
         <input id="dCalle" placeholder="Calle y número" ${inp()}>
         <div style="display:flex;gap:10px">
           <input id="dCol" placeholder="Colonia" ${inp()} style="flex:2;${inpS()}">
           <input id="dCP" placeholder="C.P." inputmode="numeric" ${inp()} style="flex:1;${inpS()}">
+        </div>
+        <div style="display:flex;gap:10px">
+          <input id="dCiudad" placeholder="Ciudad" ${inp()} style="flex:1;${inpS()}">
+          <input id="dEstado" placeholder="Estado" ${inp()} style="flex:1;${inpS()}">
         </div>
         <input id="dRef" placeholder="Referencias (opcional)" ${inp()}>
         <div id="dErr" style="color:#ff6b6b;font-size:12.5px;min-height:16px"></div>
@@ -52,9 +56,10 @@ function abrirModal(onConfirm, onCancel) {
   ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
   $("#dGo").onclick = () => {
     const nombre = $("#dNombre").value.trim(), tel = $("#dTel").value.trim();
-    const calle = $("#dCalle").value.trim(), col = $("#dCol").value.trim(), cp = $("#dCP").value.trim(), ref = $("#dRef").value.trim();
-    if (!nombre || !tel || !calle || !col || !cp) { $("#dErr").textContent = "Completa nombre, teléfono, calle, colonia y C.P."; return; }
-    const direccion = `${calle}, Col. ${col}, C.P. ${cp}${ref ? " (" + ref + ")" : ""}`;
+    const calle = $("#dCalle").value.trim(), col = $("#dCol").value.trim(), cp = $("#dCP").value.trim();
+    const ciudad = $("#dCiudad").value.trim(), estado = $("#dEstado").value.trim(), ref = $("#dRef").value.trim();
+    if (!nombre || !tel || !calle || !col || !cp || !ciudad || !estado) { $("#dErr").textContent = "Completa nombre, teléfono, calle, colonia, C.P., ciudad y estado."; return; }
+    const direccion = `${calle}, Col. ${col}, ${ciudad}, ${estado}, C.P. ${cp}${ref ? " (" + ref + ")" : ""}`;
     $("#dGo").disabled = true; $("#dGo").textContent = "Generando pago…";
     ov.remove();
     onConfirm({ cliente: nombre, telefono: tel, direccion });
