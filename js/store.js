@@ -1,5 +1,6 @@
 import { db, MODO } from "./db.js";
 import { setProductos, initCart, enCarrito } from "./cart.js";
+import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -19,16 +20,19 @@ document.body.appendChild(badge);
 if (MODO === "demo") await db.seedIfEmpty();
 db.onProducts(list => { productos = list; setProductos(list); renderCatalogo(); });
 
-function stockInfo(s) {
-  if (s <= 0) return { cls: "out", txt: "Agotado" };
-  if (s <= 3) return { cls: "low", txt: `Últimas ${s}` };
-  return { cls: "ok", txt: "Disponible" };
-}
-
 function cardHTML(p) {
-  const st = stockInfo(p.stock);
-  const sinStock = p.stock <= 0;
-  const tope = enCarrito(p.id) >= p.stock;
+  const total = stockTotal(p);
+  const st = etiquetaStock(total);
+  const sinStock = total <= 0;
+  const sized = tieneTallas(p);
+  const precioTxt = preciosVarian(p) ? `desde ${money(precioDesde(p))}` : money(precioDesde(p));
+  const boton = sinStock
+    ? `<button class="add-btn" disabled>Agotado</button>`
+    : sized
+      ? `<a class="add-btn" href="producto.html?id=${encodeURIComponent(p.id)}" style="display:block;text-align:center;text-decoration:none">Elegir talla</a>`
+      : (enCarrito(p.id) >= total
+          ? `<button class="add-btn" disabled>Máximo en carrito</button>`
+          : `<button class="add-btn" data-add="${p.id}">Agregar al carrito</button>`);
   const media = p.imagen
     ? `<img src="${p.imagen}" alt="${p.nombre}" loading="lazy" onerror="this.style.display='none';this.parentElement.querySelector('.card__ph').style.display='block'">
        <span class="card__ph" style="display:none">📷 Sin foto aún</span>`
@@ -44,12 +48,10 @@ function cardHTML(p) {
         <h3 class="card__name">${p.nombre}</h3>
         <p class="card__desc">${p.descripcion || ""}</p>
         <div class="card__foot">
-          <div class="price">${money(p.precio)} <span>MXN</span></div>
+          <div class="price">${precioTxt} <span>MXN</span></div>
           <span class="stock stock--${st.cls}">${st.txt}</span>
         </div>
-        <button class="add-btn" data-add="${p.id}" ${sinStock || tope ? "disabled" : ""}>
-          ${sinStock ? "Agotado" : tope ? "Máximo en carrito" : "Agregar al carrito"}
-        </button>
+        ${boton}
       </div>
     </article>`;
 }
