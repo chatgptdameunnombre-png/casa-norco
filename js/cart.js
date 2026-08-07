@@ -6,7 +6,7 @@ const money = n => "$" + Number(n).toLocaleString("es-MX");
 
 let cart = cargar();
 let productos = [];
-let envio = false;
+let entrega = null;
 
 function cargar() {
   try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; }
@@ -40,7 +40,7 @@ export function renderCart() {
 
   const count = items.reduce((a, i) => a + i.qty, 0);
   const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
-  const total = subtotal + (envio ? ENVIO_DOMICILIO : 0);
+  const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
   const countEl = $("#cartCount");
   if (countEl) countEl.textContent = count;
 
@@ -66,8 +66,12 @@ export function renderCart() {
       <button class="line__rm" data-rm="${i.id}">Quitar</button>
     </div>`).join("");
   $("#cartTotal").textContent = money(total);
-  const chk = $("#envioToggle");
-  if (chk) chk.checked = envio;
+  document.querySelectorAll(".entrega-cart").forEach(b => {
+    const on = b.dataset.ec === entrega;
+    b.style.borderColor = on ? "#c6f032" : "#2a2a30";
+    b.style.background = on ? "rgba(198,240,50,.12)" : "#17171b";
+    b.style.color = on ? "#c6f032" : "#f4f4f5";
+  });
   $("#cartFoot").hidden = false;
 }
 
@@ -77,12 +81,12 @@ function checkout() {
     return p ? { ...p, qty: Math.min(c.qty, p.stock) } : null;
   }).filter(Boolean).filter(i => i.qty > 0);
   if (!items.length) return;
+  if (!entrega) { toast("Elige cómo lo recibes: <b>recoger</b> o <b>a domicilio</b>"); return; }
   const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
-  const total = subtotal + (envio ? ENVIO_DOMICILIO : 0);
+  const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
   let msg = `¡Hola ${NEGOCIO.nombre}! Quiero comprar:\n\n`;
   items.forEach(i => { msg += `• ${i.qty}× ${i.nombre} — ${money(i.precio * i.qty)}\n`; });
-  if (envio) msg += `\nEnvío a domicilio: ${money(ENVIO_DOMICILIO)}`;
-  else msg += `\nRecoger en tienda`;
+  msg += entrega === "domicilio" ? `\nEnvío a domicilio: ${money(ENVIO_DOMICILIO)}` : `\nRecoger en tienda`;
   msg += `\n\nTotal: ${money(total)}\n\n¿Cómo continúo con el pago?`;
   window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -101,6 +105,8 @@ function toast(html) {
 
 export function initCart() {
   document.addEventListener("click", e => {
+    const ec = e.target.closest("[data-ec]");
+    if (ec) { entrega = ec.dataset.ec; renderCart(); return; }
     const t = e.target.closest("[data-add],[data-inc],[data-dec],[data-rm]");
     if (!t) return;
     e.preventDefault();
@@ -114,12 +120,12 @@ export function initCart() {
   $("#overlay")?.addEventListener("click", closeDrawer);
   $("#checkout")?.addEventListener("click", checkout);
   const foot = $("#cartFoot");
-  if (foot && !$("#envioToggle")) {
-    const wrap = document.createElement("label");
-    wrap.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:14px";
-    wrap.innerHTML = `<input type="checkbox" id="envioToggle" style="width:18px;height:18px;accent-color:#c6f032"> Envío a domicilio (+${money(ENVIO_DOMICILIO)})`;
+  if (foot && !$("#entregaCart")) {
+    const wrap = document.createElement("div");
+    wrap.id = "entregaCart";
+    wrap.style.cssText = "display:flex;gap:8px;margin-bottom:12px";
+    wrap.innerHTML = `<button type="button" class="entrega-cart" data-ec="tienda" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏪 Recoger</button><button type="button" class="entrega-cart" data-ec="domicilio" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>`;
     foot.prepend(wrap);
-    $("#envioToggle").addEventListener("change", e => { envio = e.target.checked; renderCart(); });
   }
   renderCart();
 }
