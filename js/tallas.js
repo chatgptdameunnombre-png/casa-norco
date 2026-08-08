@@ -39,6 +39,5 @@ export function preciosVarian(p) {
 export function etiquetaStock(n) {
   n = Number(n) || 0;
   if (n <= 0) return { cls: "out", txt: "Agotado" };
-  if (n < 5) return { cls: "low", txt: "Quedan " + n };
   return { cls: "ok", txt: "Disponible" };
 }
