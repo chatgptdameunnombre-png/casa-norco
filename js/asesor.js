@@ -6,7 +6,8 @@ const SID_KEY = "casanorco_asesor_sid";
 const SALUDO = "¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.";
 
 let productos = [];
-import("./db.js").then(m => { m.db.onProducts(list => { productos = list; }); }).catch(() => {});
+let alCargarProductos = null;
+import("./db.js").then(m => { m.db.onProducts(list => { productos = list; if (alCargarProductos) alCargarProductos(); }); }).catch(() => {});
 
 function sessionId() {
   let s = localStorage.getItem(SID_KEY);
@@ -155,9 +156,14 @@ function montar() {
     scroll();
   }
 
-  function mostrarTarjetas(reply, ids, intentos) {
-    intentos = intentos || 0;
-    if (!productos.length && intentos < 12) { setTimeout(() => mostrarTarjetas(reply, ids, intentos + 1), 350); return; }
+  const tarjetasPendientes = [];
+  function pintarPendientes() {
+    while (tarjetasPendientes.length) {
+      const { reply, ids } = tarjetasPendientes.shift();
+      pintarTarjetas(reply, ids);
+    }
+  }
+  function pintarTarjetas(reply, ids) {
     const idsMostrar = ids.slice();
     const low = (reply || "").toLowerCase();
     for (const p of productos) {
@@ -165,6 +171,11 @@ function montar() {
     }
     if (idsMostrar.length) tarjetas(idsMostrar);
   }
+  function mostrarTarjetas(reply, ids) {
+    if (!productos.length) { tarjetasPendientes.push({ reply, ids }); return; }
+    pintarTarjetas(reply, ids);
+  }
+  alCargarProductos = pintarPendientes;
 
   async function enviar(txt) {
     const t = typing();
