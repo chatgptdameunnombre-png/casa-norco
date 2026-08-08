@@ -1,4 +1,3 @@
-import { db } from "./db.js";
 import { ASESOR_WEBHOOK, NEGOCIO } from "./config.js";
 import { tieneTallas, stockTotal, precioDesde, preciosVarian } from "./tallas.js";
 
@@ -7,7 +6,7 @@ const SID_KEY = "casanorco_asesor_sid";
 const SALUDO = "¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bici, un casco, algo para proteger— y te muestro lo que tenemos.";
 
 let productos = [];
-db.onProducts(list => { productos = list; });
+import("./db.js").then(m => { m.db.onProducts(list => { productos = list; }); }).catch(() => {});
 
 function sessionId() {
   let s = localStorage.getItem(SID_KEY);
