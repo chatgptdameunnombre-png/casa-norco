@@ -44,6 +44,11 @@
     <label for="prod">Producto</label>
     <select id="prod"><option>Cargando catálogo…</option></select>
 
+    <div id="tallaBox" style="display:none;margin-top:12px">
+      <label for="tallaSel">Talla</label>
+      <select id="tallaSel"></select>
+    </div>
+
     <div class="row">
       <div style="flex:1">
         <label for="qty">Cantidad</label>
@@ -86,21 +91,35 @@ const money=n=>"$"+Number(n).toLocaleString("es-MX");
 let productos=[], entrega="tienda";
 
 async function cargar(){
-  const url=`https://firestore.googleapis.com/v1/projects/${PROJ}/databases/(default)/documents/productos?mask.fieldPaths=nombre&mask.fieldPaths=precio&mask.fieldPaths=stock&pageSize=300`;
+  const url=`https://firestore.googleapis.com/v1/projects/${PROJ}/databases/(default)/documents/productos?mask.fieldPaths=nombre&mask.fieldPaths=precio&mask.fieldPaths=stock&mask.fieldPaths=tallaTipo&mask.fieldPaths=tallas&pageSize=300`;
   const d=await (await fetch(url)).json();
   productos=(d.documents||[]).map(doc=>{
     const f=doc.fields;
-    return {id:doc.name.split("/").pop(), nombre:f.nombre?.stringValue||"", precio:+(f.precio?.integerValue||f.precio?.doubleValue||0), stock:+(f.stock?.integerValue||0)};
+    const tallasRaw=f.tallas?.arrayValue?.values||[];
+    const tallas=tallasRaw.map(v=>{const tf=v.mapValue.fields; return {talla:tf.talla.stringValue, stock:+(tf.stock?.integerValue||0), precio:+(tf.precio?.integerValue||0)};});
+    const tallado=f.tallaTipo?.stringValue==="tallas" && tallas.length>0;
+    return {id:doc.name.split("/").pop(), nombre:f.nombre?.stringValue||"", precio:+(f.precio?.integerValue||f.precio?.doubleValue||0), stock:+(f.stock?.integerValue||0), tallado, tallas};
   }).sort((a,b)=>a.nombre.localeCompare(b.nombre));
   const sel=$("#prod");
-  sel.innerHTML=productos.map(p=>`<option value="${p.id}">${p.nombre} — ${money(p.precio)} (stock ${p.stock})</option>`).join("");
-  actualizar();
+  sel.innerHTML=productos.map(p=>`<option value="${p.id}">${p.nombre}${p.tallado?" (con tallas)":""}</option>`).join("");
+  onProd();
 }
 function prodSel(){ return productos.find(p=>p.id===$("#prod").value); }
+function tallaSelObj(){ const p=prodSel(); if(!p||!p.tallado) return null; return p.tallas.find(t=>t.talla===$("#tallaSel").value)||null; }
+function precioSel(){ const p=prodSel(); if(!p) return 0; if(p.tallado){ const t=tallaSelObj(); return t&&t.precio>0?t.precio:p.precio; } return p.precio; }
+function onProd(){
+  const p=prodSel();
+  const box=$("#tallaBox");
+  if(p&&p.tallado){
+    box.style.display="block";
+    $("#tallaSel").innerHTML=p.tallas.map(t=>`<option value="${t.talla}">${t.talla} — ${t.stock>0?"disponible":"AGOTADA"}</option>`).join("");
+  } else { box.style.display="none"; }
+  actualizar();
+}
 function actualizar(){
   const p=prodSel(); if(!p) return;
   const qty=Math.max(1,+$("#qty").value||1);
-  const tot=p.precio*qty+(entrega==="domicilio"?ENVIO:0);
+  const tot=precioSel()*qty+(entrega==="domicilio"?ENVIO:0);
   $("#tot").textContent=`Total: ${money(tot)}${entrega==="domicilio"?" (incluye envío $380)":""}`;
 }
 document.querySelectorAll("[data-ent]").forEach(b=>b.onclick=()=>{
@@ -109,21 +128,22 @@ document.querySelectorAll("[data-ent]").forEach(b=>b.onclick=()=>{
   $("#dirBox").style.display=entrega==="domicilio"?"block":"none";
   actualizar();
 });
-$("#prod").onchange=actualizar; $("#qty").oninput=actualizar;
+$("#prod").onchange=onProd; $("#tallaSel").onchange=actualizar; $("#qty").oninput=actualizar;
 
 $("#go").onclick=async()=>{
   const p=prodSel(); if(!p) return;
+  const talla=p.tallado?$("#tallaSel").value:"";
   const qty=Math.max(1,+$("#qty").value||1);
   const nombre=$("#nom").value.trim()||"Cliente Prueba";
   const tel=$("#tel").value.trim();
   const dir=$("#dir").value.trim();
   if(entrega==="domicilio" && !dir){ $("#dir").focus(); return; }
-  const total=p.precio*qty+(entrega==="domicilio"?ENVIO:0);
+  const total=precioSel()*qty+(entrega==="domicilio"?ENVIO:0);
   $("#go").disabled=true; $("#go").textContent="Procesando…"; $("#res").style.display="none";
   try{
     const r=await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
       test:true, total, ref:"PRUEBA-WEB",
-      metadata:{ entrega, productos:[{id:p.id,qty,title:p.nombre}], cliente:nombre, telefono:tel, direccion:entrega==="domicilio"?dir:"" }
+      metadata:{ entrega, productos:[{id:p.id,qty,title:p.nombre,talla}], cliente:nombre, telefono:tel, direccion:entrega==="domicilio"?dir:"" }
     })});
     const d=await r.json();
     const bajado=(d.stock_bajado||[]).join(", ")||"(sin cambio)";
