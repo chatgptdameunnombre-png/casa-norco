@@ -1,4 +1,4 @@
-import { ASESOR_WEBHOOK, NEGOCIO } from "./config.js";
+import { ASESOR_WEBHOOK, NEGOCIO, firebaseConfig } from "./config.js";
 import { tieneTallas, stockTotal, precioDesde, preciosVarian } from "./tallas.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -7,7 +7,35 @@ const SALUDO = "¡Hola! 👋 Soy la IA de Casa Norco. Dime qué buscas —una bi
 
 let productos = [];
 let alCargarProductos = null;
-import("./db.js").then(m => { m.db.onProducts(list => { productos = list; if (alCargarProductos) alCargarProductos(); }); }).catch(() => {});
+function setProductos(list) {
+  if (!list || !list.length) return;
+  productos = list;
+  if (alCargarProductos) alCargarProductos();
+}
+
+import("./db.js").then(m => { m.db.onProducts(list => setProductos(list)); }).catch(() => {});
+
+function fsVal(v) {
+  const t = Object.keys(v)[0];
+  if (t === "integerValue" || t === "doubleValue") return Number(v[t]);
+  if (t === "booleanValue") return v[t];
+  if (t === "nullValue") return null;
+  if (t === "arrayValue") return (v.arrayValue.values || []).map(fsVal);
+  if (t === "mapValue") return fsFields(v.mapValue.fields || {});
+  return v[t];
+}
+function fsFields(f) { const o = {}; for (const k in f) o[k] = fsVal(f[k]); return o; }
+async function cargarProductosREST() {
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/productos?key=${firebaseConfig.apiKey}&pageSize=300`;
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const d = await r.json();
+    const list = (d.documents || []).map(doc => ({ id: doc.name.split("/").pop(), ...fsFields(doc.fields || {}) }));
+    if (!productos.length) setProductos(list);
+  } catch {}
+}
+cargarProductosREST();
 
 function sessionId() {
   let s = localStorage.getItem(SID_KEY);
