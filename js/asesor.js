@@ -155,6 +155,17 @@ function montar() {
     scroll();
   }
 
+  function mostrarTarjetas(reply, ids, intentos) {
+    intentos = intentos || 0;
+    if (!productos.length && intentos < 12) { setTimeout(() => mostrarTarjetas(reply, ids, intentos + 1), 350); return; }
+    const idsMostrar = ids.slice();
+    const low = (reply || "").toLowerCase();
+    for (const p of productos) {
+      if (p.nombre && p.nombre.length >= 4 && low.includes(p.nombre.toLowerCase()) && !idsMostrar.includes(p.id)) idsMostrar.push(p.id);
+    }
+    if (idsMostrar.length) tarjetas(idsMostrar);
+  }
+
   async function enviar(txt) {
     const t = typing();
     try {
@@ -167,12 +178,7 @@ function montar() {
       t.remove();
       const reply = d.reply || "Perdón, no te entendí bien. ¿Me lo dices de otra forma?";
       pintarBot(reply);
-      const idsMostrar = Array.isArray(d.ids) ? d.ids.slice() : [];
-      const low = reply.toLowerCase();
-      for (const p of productos) {
-        if (p.nombre && p.nombre.length >= 4 && low.includes(p.nombre.toLowerCase()) && !idsMostrar.includes(p.id)) idsMostrar.push(p.id);
-      }
-      if (idsMostrar.length) tarjetas(idsMostrar);
+      mostrarTarjetas(reply, Array.isArray(d.ids) ? d.ids : []);
     } catch {
       t.remove();
       pintarBot("Uy, se me fue la señal 📶. Inténtalo de nuevo en un momento.");
