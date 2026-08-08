@@ -195,9 +195,10 @@ const CSS = `
 #asesorBtn.hide{transform:scale(.4);opacity:0;pointer-events:none}
 #asesorBtn .asesor-logo{height:20px;width:auto;display:block}
 @media(max-width:520px){
-  #asesorBtn{padding:0;width:58px;height:58px;border-radius:50%;justify-content:center}
+  #asesorBtn{padding:0;width:58px;height:58px;border-radius:50%;justify-content:center;bottom:calc(env(safe-area-inset-bottom, 0px) + 26px);z-index:2147483000}
   #asesorBtn .asesor-lbl{display:none}
   #asesorBtn .asesor-logo{height:28px}
+  #asesorPanel{bottom:calc(env(safe-area-inset-bottom, 0px) + 20px)}
 }
 #asesorPanel{position:fixed;right:20px;bottom:20px;z-index:9999;width:380px;max-width:calc(100vw - 32px);
   height:560px;max-height:calc(100vh - 40px);background:#141416;border:1px solid #26262c;border-radius:20px;
