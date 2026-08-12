@@ -87,7 +87,7 @@ function render() {
           <button class="add-btn add-btn--big" id="buyNow" ${puede ? "" : "disabled"} style="flex:1;margin:0;background:#c6f032;color:#0a0a0a">${labelBuy}</button>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
-          <button type="button" class="entrega-op" data-entrega="tienda" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏪 Recoger en tienda</button>
+          <button type="button" class="entrega-op" data-entrega="tienda" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">Recoger en tienda</button>
           <button type="button" class="entrega-op" data-entrega="domicilio" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>
         </div>
         <div id="prodTotal" style="margin-top:10px;font-weight:600;color:#c6f032"></div>
