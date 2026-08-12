@@ -158,7 +158,7 @@ export function initCart() {
     const wrap = document.createElement("div");
     wrap.id = "entregaCart";
     wrap.style.cssText = "display:flex;gap:8px;margin-bottom:12px";
-    wrap.innerHTML = `<button type="button" class="entrega-cart" data-ec="tienda" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏪 Recoger</button><button type="button" class="entrega-cart" data-ec="domicilio" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>`;
+    wrap.innerHTML = `<button type="button" class="entrega-cart" data-ec="tienda" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">Recoger en tienda</button><button type="button" class="entrega-cart" data-ec="domicilio" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>`;
     foot.prepend(wrap);
   }
   renderCart();
