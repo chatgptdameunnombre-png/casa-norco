@@ -116,11 +116,18 @@ function onProd(){
   } else { box.style.display="none"; }
   actualizar();
 }
+function dispSel(){ const p=prodSel(); if(!p) return 0; if(p.tallado){ const t=tallaSelObj(); return t?t.stock:0; } return p.stock; }
 function actualizar(){
   const p=prodSel(); if(!p) return;
-  const qty=Math.max(1,+$("#qty").value||1);
+  const disp=dispSel();
+  const qi=$("#qty");
+  qi.max=Math.max(1,disp);
+  let qty=Math.max(1,+qi.value||1);
+  if(disp>0 && qty>disp){ qty=disp; qi.value=disp; }
   const tot=precioSel()*qty+(entrega==="domicilio"?ENVIO:0);
-  $("#tot").textContent=`Total: ${money(tot)}${entrega==="domicilio"?" (incluye envío $380)":""}`;
+  const aviso=disp<=0?'<span style="color:#ff9b9b"> · agotado</span>':(qty>=disp?`<span style="color:#9a9aa2"> · máximo ${disp} disponible${disp>1?"s":""}</span>`:"");
+  $("#tot").innerHTML=`Total: ${money(tot)}${entrega==="domicilio"?" (incluye envío $380)":""}${aviso}`;
+  $("#go").disabled=disp<=0;
 }
 document.querySelectorAll("[data-ent]").forEach(b=>b.onclick=()=>{
   entrega=b.dataset.ent;
@@ -133,7 +140,9 @@ $("#prod").onchange=onProd; $("#tallaSel").onchange=actualizar; $("#qty").oninpu
 $("#go").onclick=async()=>{
   const p=prodSel(); if(!p) return;
   const talla=p.tallado?$("#tallaSel").value:"";
-  const qty=Math.max(1,+$("#qty").value||1);
+  const disp=dispSel();
+  if(disp<=0){ actualizar(); return; }
+  const qty=Math.min(Math.max(1,+$("#qty").value||1),disp);
   const nombre=$("#nom").value.trim()||"Cliente Prueba";
   const tel=$("#tel").value.trim();
   const dir=$("#dir").value.trim();
@@ -151,7 +160,7 @@ $("#go").onclick=async()=>{
       <h3>✅ Venta simulada correctamente</h3>
       <div class="chk">📉 <span>Stock: <b>${bajado}</b></span></div>
       <div class="chk">☁️ <span>Registrada en la nube: <b>${d.registro==="ok"?"sí":d.registro}</b></span></div>
-      <div class="chk">📲 <span>Mensaje a tu Telegram: <b>${d.telegram==="ok"?"enviado":d.telegram}</b></span></div>
+      <div class="chk">📲 <span>Aviso de la venta: <b>${d.telegram==="wa"?"WhatsApp enviado":(d.telegram==="ok"?"enviado":d.telegram)}</b></span></div>
       <div class="chk">📍 <span>Dirección leída: <b>${d.direccion||"(recoger en tienda)"}</b></span></div>
       <div class="chk">💰 <span>Total: <b>${money(d.total||total)}</b></span></div>
     </div>`;
