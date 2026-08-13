@@ -320,6 +320,26 @@ main.sec--top { max-width: none; padding-left: 34px; padding-right: 34px; }
 .card__flag { position: absolute; top: 12px; right: 12px; z-index: 2; padding: 5px 11px; border-radius: 999px; font-family: var(--mono); font-size: 9.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .card__flag--pre { background: var(--accent); color: var(--accent-ink); }
 .card__flag--semi { background: rgba(12,12,13,.82); backdrop-filter: blur(4px); color: var(--ink); border: 1px solid var(--line); }
+
+/* ---- Noticias: slider de banners (home) ---- */
+.bslider { position: relative; width: 100%; height: 440px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+.bslide { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity .6s ease; display: flex; align-items: flex-end; }
+.bslide.on { opacity: 1; }
+.bslide__shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,10,11,.9) 0%, rgba(10,10,11,.5) 45%, rgba(10,10,11,.1) 100%); }
+.bslide__c { position: relative; padding: 44px; max-width: 560px; }
+.bslide__tag { display: inline-block; background: var(--accent); color: var(--accent-ink); padding: 5px 13px; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
+.bslide__c h3 { font-family: var(--display); font-size: 32px; font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 10px; }
+.bslide__c p { font-size: 15px; color: #d2d2d6; margin-bottom: 20px; max-width: 460px; }
+.bslide__btn { display: inline-block; background: var(--accent); color: var(--accent-ink); padding: 13px 26px; border-radius: 12px; font-weight: 800; font-size: 14px; text-decoration: none; transition: transform .2s; }
+.bslide__btn:hover { transform: translateY(-2px); }
+.bslider__nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(12,12,13,.55); border: 1px solid var(--line); color: #fff; width: 42px; height: 42px; border-radius: 50%; font-size: 24px; line-height: 1; cursor: pointer; z-index: 5; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.bslider__nav:hover { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.bslider__prev { left: 16px; }
+.bslider__next { right: 16px; }
+.bslider__dots { position: absolute; bottom: 16px; right: 20px; display: flex; gap: 7px; z-index: 5; }
+.bslider__dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.45); cursor: pointer; transition: background .2s; }
+.bslider__dots span.on { background: var(--accent); }
+@media (max-width: 700px) { .bslider { height: 360px; } .bslide__c { padding: 26px; } .bslide__c h3 { font-size: 24px; } }
 .card__body { padding: 20px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
 .card__brand { font-family: var(--mono); font-size: 11px; font-weight: 400; color: var(--accent); letter-spacing: .12em; text-transform: uppercase; }
 .card__name { font-family: var(--display); font-weight: 600; font-size: 18px; line-height: 1.25; letter-spacing: -.01em; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
