@@ -22,7 +22,7 @@ async function runQuery(field) {
 }
 
 const ANUNCIOS = [
-  { img: "fotos/instagram/Db6aJUvJjhs.jpg", tipo: "Taller",
+  { img: "fotos/instagram/Db6aJUvJjhs.jpg", tipo: "Taller", fit: true,
     titulo: "Taller de mecánica básica para mujeres",
     texto: "Aprende a darle mantenimiento a tu bici en un taller pensado para ti. Cupo limitado.",
     link: "https://www.instagram.com/p/Db6aJUvJjhs/", externo: true }
@@ -33,7 +33,7 @@ function bannerHTML(a, i) {
   const cta = a.externo ? "Ver en Instagram ↗" : "Ver la bici →";
   return `
     <div class="bslide${i === 0 ? " on" : ""}">
-      <div class="bslide__img"><img src="${a.img}" alt="${a.titulo}" loading="lazy"></div>
+      <div class="bslide__img"><img src="${a.img}" alt="${a.titulo}" loading="lazy" style="${a.fit ? 'object-fit:contain;background:#0f0f12' : ''}"></div>
       <div class="bslide__c">
         ${a.tipo ? `<span class="bslide__tag">${a.tipo}</span>` : ""}
         <h3>${a.titulo}</h3>
