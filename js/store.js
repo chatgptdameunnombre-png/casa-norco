@@ -8,7 +8,7 @@ const CAT = document.querySelector("#catalogo")?.dataset.categoria || null;
 
 let productos = [];
 let io;
-let subActiva = "Todas";
+let f = { sub: "Todas", marca: "Todas", genero: "Todos", orden: "rel" };
 
 /* ---------- badge de modo ---------- */
 const badge = document.createElement("div");
@@ -56,22 +56,56 @@ function cardHTML(p) {
     </article>`;
 }
 
+/* ---------- panel de filtros ---------- */
+function grupoChips(label, key, valores, activo) {
+  if (valores.length <= 2) return "";
+  return `<div class="fgroup"><span class="fgroup__lbl">${label}</span>
+    <div class="fgroup__chips">${valores.map(v =>
+      `<button class="chip ${v === activo ? "chip--on" : ""}" data-f="${key}" data-v="${v}">${v}</button>`
+    ).join("")}</div></div>`;
+}
+
 function renderCatalogo() {
   const gridEl = $("#grid");
   if (!CAT || !gridEl) return;
   const delaCat = productos.filter(p => p.categoria === CAT);
 
   const subs = ["Todas", ...new Set(delaCat.map(p => p.subcategoria).filter(Boolean))];
-  if (!subs.includes(subActiva)) subActiva = "Todas";
+  const marcas = ["Todas", ...[...new Set(delaCat.map(p => p.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b))];
+  const generos = ["Todos", ...new Set(delaCat.map(p => p.genero).filter(Boolean))];
+  if (!subs.includes(f.sub)) f.sub = "Todas";
+  if (!marcas.includes(f.marca)) f.marca = "Todas";
+  if (!generos.includes(f.genero)) f.genero = "Todos";
+
   const filtrosEl = $("#filtros");
-  if (filtrosEl) filtrosEl.innerHTML = subs.length > 1 ? subs.map(sub =>
-    `<button class="chip ${sub === subActiva ? "chip--on" : ""}" data-sub="${sub}">${sub}</button>`
-  ).join("") : "";
+  if (filtrosEl) {
+    filtrosEl.innerHTML =
+      grupoChips("Tipo", "sub", subs, f.sub) +
+      grupoChips("Marca", "marca", marcas, f.marca) +
+      grupoChips("Género", "genero", generos, f.genero) +
+      `<div class="fgroup fgroup--orden"><span class="fgroup__lbl">Orden</span>
+        <select id="ordenSel" class="fsel">
+          <option value="rel">Relevancia</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="nombre">Nombre A–Z</option>
+        </select></div>`;
+    const sel = $("#ordenSel"); if (sel) sel.value = f.orden;
+  }
 
   if (!productos.length) { gridEl.innerHTML = `<p style="color:var(--muted)">Cargando…</p>`; return; }
-  const lista = subActiva === "Todas" ? delaCat : delaCat.filter(p => p.subcategoria === subActiva);
+
+  let lista = delaCat.filter(p =>
+    (f.sub === "Todas" || p.subcategoria === f.sub) &&
+    (f.marca === "Todas" || p.marca === f.marca) &&
+    (f.genero === "Todos" || p.genero === f.genero));
+
+  if (f.orden === "precio-asc") lista.sort((a, b) => precioDesde(a) - precioDesde(b));
+  else if (f.orden === "precio-desc") lista.sort((a, b) => precioDesde(b) - precioDesde(a));
+  else if (f.orden === "nombre") lista.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
+
   gridEl.innerHTML = lista.length ? lista.map(cardHTML).join("")
-    : `<p style="color:var(--muted)">Nada en "${subActiva}" por ahora.</p>`;
+    : `<p style="color:var(--muted)">Nada con esos filtros. Prueba quitar alguno.</p>`;
   observarReveal();
 }
 
@@ -82,13 +116,16 @@ function observarReveal() {
   document.querySelectorAll(".reveal:not(.in)").forEach(el => io.observe(el));
 }
 
-/* ---------- navegación a producto + sub-filtros ---------- */
+/* ---------- interacción: filtros, orden, navegación ---------- */
 document.addEventListener("click", e => {
-  const chip = e.target.closest("[data-sub]");
-  if (chip) { subActiva = chip.dataset.sub; renderCatalogo(); return; }
+  const chip = e.target.closest("[data-f]");
+  if (chip) { f[chip.dataset.f] = chip.dataset.v; renderCatalogo(); return; }
   if (e.target.closest("[data-add],[data-inc],[data-dec],[data-rm]")) return;
   const card = e.target.closest("[data-id]");
   if (card) window.location.href = `producto.html?id=${encodeURIComponent(card.dataset.id)}`;
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "ordenSel") { f.orden = e.target.value; renderCatalogo(); }
 });
 
 initCart();
