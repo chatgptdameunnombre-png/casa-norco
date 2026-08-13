@@ -12,7 +12,7 @@
   <link rel="icon" href="fotos/logo/iso-negro.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=9">
+  <link rel="stylesheet" href="css/styles.css?v=10">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -47,8 +47,8 @@
       <nav class="nav">
         <a href="bicicletas.html">Bicicletas</a>
         <a href="accesorios.html">Accesorios</a>
-        <a href="seminuevos.html">Seminuevos</a>
-        <a href="noticias.html">Noticias</a>
+        <a href="#seminuevos">Seminuevos</a>
+        <a href="#noticias">Noticias</a>
         <a href="#visitanos">Visítanos</a>
       </nav>
     </div>
@@ -87,6 +87,28 @@
         </div>
       </a>
     </div>
+  </section>
+
+  <!-- ================= SEMINUEVOS ================= -->
+  <section class="wrap sec" id="seminuevos">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Oportunidades</span>
+      <h2>Seminuevos</h2>
+      <p>Bicicletas seminuevas, revisadas por nuestro taller.</p>
+      <span class="rule"></span>
+    </div>
+    <div class="grid" id="homeSeminuevos"></div>
+  </section>
+
+  <!-- ================= NOTICIAS ================= -->
+  <section class="wrap sec" id="noticias">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Novedades</span>
+      <h2>Noticias</h2>
+      <p>Rodadas, talleres, promociones y preventas.</p>
+      <span class="rule"></span>
+    </div>
+    <div id="homeNoticias"></div>
   </section>
 
   <!-- ================= NUESTRA TIENDA ================= -->
@@ -228,5 +250,6 @@
     }, 1400);
   })();
   </script>
+  <script type="module" src="js/home-secciones.js?v=1"></script>
 </body>
 </html>
