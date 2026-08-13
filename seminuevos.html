@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seminuevos — Casa Norco</title>
+  <link rel="icon" href="fotos/logo/iso-negro.png">
+  <link rel="stylesheet" href="css/styles.css?v=9">
+</head>
+<body>
+  <header class="hdr">
+    <div class="wrap hdr__in">
+      <a href="index.html" class="brand" aria-label="Casa Norco">
+        <img class="brand__iso" src="fotos/logo/iso-blanco.png" alt="">
+        <span class="brand__word">
+          <span class="brand__name">CASA NORCO</span>
+          <span class="brand__sub">Cueva Bicycles · Speedhouse</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="seminuevos.html">Seminuevos</a>
+        <a href="noticias.html">Noticias</a>
+        <a href="index.html#visitanos">Visítanos</a>
+      </nav>
+      <button class="cart-btn" id="openCart">
+        <span>Carrito</span>
+        <span class="count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap sec sec--top">
+    <div class="sec__head reveal">
+      <div><h2>Seminuevos</h2><p>Bicicletas seminuevas revisadas por nuestro taller</p></div>
+      <a href="index.html" class="volver">← Inicio</a>
+    </div>
+    <div id="catalogo" data-modo="seminuevo">
+      <div class="filtros" id="filtros"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+
+  <footer class="ftr">
+    <div class="wrap ftr__in">
+      <img class="ftr__iso" src="fotos/logo/iso-blanco.png" alt="">
+      <div class="ftr__name">CASA NORCO</div>
+      <div class="ftr__links">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="seminuevos.html">Seminuevos</a>
+        <a href="noticias.html">Noticias</a>
+        <a href="https://www.instagram.com/casanorco" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <div class="ftr__legal">Cueva Bicycles Speedhouse · Zapopan, Jal.</div>
+    </div>
+  </footer>
+
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-label="Carrito">
+    <div class="drawer__head">
+      <h3>Tu carrito</h3>
+      <button class="icon-btn" id="closeCart">✕</button>
+    </div>
+    <div class="drawer__body" id="cartBody"></div>
+    <div class="drawer__foot" id="cartFoot" hidden>
+      <div class="drawer__total"><span>Total</span><b id="cartTotal">$0</b></div>
+      <button class="checkout" id="checkout">
+        <span>Finalizar pedido<small>Te llevamos a completar tu compra</small></span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="toast-wrap" id="toasts"></div>
+  <script type="module" src="js/store.js?v=9"></script>
+  <script type="module" src="js/asesor.js?v=6"></script>
+</body>
+</html>
