@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noticias — Casa Norco</title>
+  <link rel="icon" href="fotos/logo/iso-negro.png">
+  <link rel="stylesheet" href="css/styles.css?v=8">
+  <style>
+    .noticias-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    @media (max-width: 1000px) { .noticias-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .noticias-grid { grid-template-columns: 1fr; } }
+    .anuncio { background: var(--tile); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+    .anuncio__media { position: relative; display: block; aspect-ratio: 1/1; background: #0f0f12; overflow: hidden; }
+    .anuncio__media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+    .anuncio:hover .anuncio__media img { transform: scale(1.04); }
+    .anuncio__tag { position: absolute; top: 12px; left: 12px; background: var(--accent); color: var(--accent-ink); padding: 5px 12px; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .anuncio__body { padding: 20px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
+    .anuncio__title { font-family: var(--display); font-weight: 600; font-size: 19px; color: var(--ink); }
+    .anuncio__text { font-size: 13.5px; color: var(--muted); flex: 1; }
+    .anuncio__btn { margin-top: 6px; display: inline-block; text-align: center; background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 11px; border-radius: 10px; font-weight: 700; font-size: 13px; text-decoration: none; transition: all .2s; }
+    .anuncio__btn:hover { background: var(--accent); color: var(--accent-ink); }
+  </style>
+</head>
+<body>
+  <header class="hdr">
+    <div class="wrap hdr__in">
+      <a href="index.html" class="brand" aria-label="Casa Norco">
+        <img class="brand__iso" src="fotos/logo/iso-blanco.png" alt="">
+        <span class="brand__word">
+          <span class="brand__name">CASA NORCO</span>
+          <span class="brand__sub">Cueva Bicycles · Speedhouse</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="noticias.html">Noticias</a>
+        <a href="index.html#visitanos">Visítanos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap sec sec--top">
+    <div class="sec__head reveal">
+      <div><h2>Noticias</h2><p>Rodadas, talleres, promociones y novedades de Casa Norco</p></div>
+      <a href="index.html" class="volver">← Inicio</a>
+    </div>
+    <div class="noticias-grid" id="noticiasGrid"></div>
+  </main>
+
+  <footer class="ftr">
+    <div class="wrap ftr__in">
+      <img class="ftr__iso" src="fotos/logo/iso-blanco.png" alt="">
+      <div class="ftr__name">CASA NORCO</div>
+      <div class="ftr__links">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="noticias.html">Noticias</a>
+        <a href="https://www.instagram.com/casanorco" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <div class="ftr__legal">Cueva Bicycles Speedhouse · Zapopan, Jal.</div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/noticias.js?v=1"></script>
+</body>
+</html>
