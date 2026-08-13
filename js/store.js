@@ -8,6 +8,7 @@ const CAT = document.querySelector("#catalogo")?.dataset.categoria || null;
 
 let productos = [];
 let io;
+let panelListo = false;
 let f = { sub: "Todas", marca: "Todas", genero: "Todos", orden: "rel" };
 
 /* ---------- badge de modo ---------- */
@@ -18,7 +19,7 @@ document.body.appendChild(badge);
 
 /* ---------- productos ---------- */
 if (MODO === "demo") await db.seedIfEmpty();
-db.onProducts(list => { productos = list; setProductos(list); renderCatalogo(); });
+db.onProducts(list => { productos = list; setProductos(list); render(); });
 
 function cardHTML(p) {
   const total = stockTotal(p);
@@ -56,56 +57,71 @@ function cardHTML(p) {
     </article>`;
 }
 
-/* ---------- panel de filtros ---------- */
-function grupoChips(label, key, valores, activo) {
+/* ---------- panel de filtros flotante (se construye 1 vez) ---------- */
+function grupo(lbl, key, valores, abierto) {
   if (valores.length <= 2) return "";
-  return `<div class="fgroup"><span class="fgroup__lbl">${label}</span>
-    <div class="fgroup__chips">${valores.map(v =>
-      `<button class="chip ${v === activo ? "chip--on" : ""}" data-f="${key}" data-v="${v}">${v}</button>`
-    ).join("")}</div></div>`;
+  const opts = valores.map(v =>
+    `<span class="opt" data-f="${key}" data-v="${v}">${v}</span>`).join("");
+  return `<div class="acc${abierto ? " open" : ""}" data-grp="${key}">
+      <button class="acc__h" type="button"><span>${lbl}</span><span class="arr">▾</span></button>
+      <div class="acc__b">${opts}</div></div>`;
 }
 
-function renderCatalogo() {
-  const gridEl = $("#grid");
-  if (!CAT || !gridEl) return;
+function buildPanel() {
+  const cont = $("#filtros");
+  if (!cont) return;
   const delaCat = productos.filter(p => p.categoria === CAT);
-
   const subs = ["Todas", ...new Set(delaCat.map(p => p.subcategoria).filter(Boolean))];
   const marcas = ["Todas", ...[...new Set(delaCat.map(p => p.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b))];
   const generos = ["Todos", ...new Set(delaCat.map(p => p.genero).filter(Boolean))];
-  if (!subs.includes(f.sub)) f.sub = "Todas";
-  if (!marcas.includes(f.marca)) f.marca = "Todas";
-  if (!generos.includes(f.genero)) f.genero = "Todos";
+  cont.innerHTML = `
+    <button class="filtros-btn" type="button" id="filtrosBtn">
+      <span class="fico">≡</span> Filtros <span class="fcount" id="fcount"></span>
+    </button>
+    <div class="filtros-panel" id="filtrosPanel" hidden>
+      ${grupo("Tipo", "sub", subs, true)}
+      ${grupo("Marca", "marca", marcas, false)}
+      ${grupo("Género", "genero", generos, false)}
+      <div class="acc" data-grp="orden">
+        <button class="acc__h" type="button"><span>Orden</span><span class="arr">▾</span></button>
+        <div class="acc__b">
+          <span class="opt" data-f="orden" data-v="rel">Relevancia</span>
+          <span class="opt" data-f="orden" data-v="precio-asc">Precio: menor a mayor</span>
+          <span class="opt" data-f="orden" data-v="precio-desc">Precio: mayor a menor</span>
+          <span class="opt" data-f="orden" data-v="nombre">Nombre A–Z</span>
+        </div>
+      </div>
+    </div>`;
+  panelListo = true;
+  marcarSel();
+}
 
-  const filtrosEl = $("#filtros");
-  if (filtrosEl) {
-    filtrosEl.innerHTML =
-      grupoChips("Tipo", "sub", subs, f.sub) +
-      grupoChips("Marca", "marca", marcas, f.marca) +
-      grupoChips("Género", "genero", generos, f.genero) +
-      `<div class="fgroup fgroup--orden"><span class="fgroup__lbl">Orden</span>
-        <select id="ordenSel" class="fsel">
-          <option value="rel">Relevancia</option>
-          <option value="precio-asc">Precio: menor a mayor</option>
-          <option value="precio-desc">Precio: mayor a menor</option>
-          <option value="nombre">Nombre A–Z</option>
-        </select></div>`;
-    const sel = $("#ordenSel"); if (sel) sel.value = f.orden;
-  }
+function marcarSel() {
+  document.querySelectorAll("#filtrosPanel .opt").forEach(o => {
+    o.classList.toggle("sel", f[o.dataset.f] === o.dataset.v);
+  });
+  const activos = (f.sub !== "Todas") + (f.marca !== "Todas") + (f.genero !== "Todos") + (f.orden !== "rel");
+  const c = $("#fcount"); if (c) { c.textContent = activos ? activos : ""; c.style.display = activos ? "" : "none"; }
+}
 
-  if (!productos.length) { gridEl.innerHTML = `<p style="color:var(--muted)">Cargando…</p>`; return; }
+function render() {
+  const gridEl = $("#grid");
+  if (!CAT || !gridEl) return;
+  if (!panelListo && productos.length) buildPanel();
 
-  let lista = delaCat.filter(p =>
-    (f.sub === "Todas" || p.subcategoria === f.sub) &&
-    (f.marca === "Todas" || p.marca === f.marca) &&
-    (f.genero === "Todos" || p.genero === f.genero));
-
+  const lista = productos.filter(p => p.categoria === CAT)
+    .filter(p =>
+      (f.sub === "Todas" || p.subcategoria === f.sub) &&
+      (f.marca === "Todas" || p.marca === f.marca) &&
+      (f.genero === "Todos" || p.genero === f.genero));
   if (f.orden === "precio-asc") lista.sort((a, b) => precioDesde(a) - precioDesde(b));
   else if (f.orden === "precio-desc") lista.sort((a, b) => precioDesde(b) - precioDesde(a));
   else if (f.orden === "nombre") lista.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
+  if (!productos.length) { gridEl.innerHTML = `<p style="color:var(--muted)">Cargando…</p>`; return; }
   gridEl.innerHTML = lista.length ? lista.map(cardHTML).join("")
     : `<p style="color:var(--muted)">Nada con esos filtros. Prueba quitar alguno.</p>`;
+  marcarSel();
   observarReveal();
 }
 
@@ -116,18 +132,24 @@ function observarReveal() {
   document.querySelectorAll(".reveal:not(.in)").forEach(el => io.observe(el));
 }
 
-/* ---------- interacción: filtros, orden, navegación ---------- */
+/* ---------- interacción ---------- */
 document.addEventListener("click", e => {
-  const chip = e.target.closest("[data-f]");
-  if (chip) { f[chip.dataset.f] = chip.dataset.v; renderCatalogo(); return; }
+  // abrir/cerrar panel
+  if (e.target.closest("#filtrosBtn")) { $("#filtrosPanel")?.toggleAttribute("hidden"); return; }
+  // abrir/cerrar sección del acordeón
+  const h = e.target.closest(".acc__h");
+  if (h) { h.parentElement.classList.toggle("open"); return; }
+  // elegir opción de filtro
+  const opt = e.target.closest("#filtrosPanel .opt");
+  if (opt) { f[opt.dataset.f] = opt.dataset.v; render(); return; }
+  // cerrar panel al hacer click fuera
+  if (!e.target.closest("#filtros")) $("#filtrosPanel")?.setAttribute("hidden", "");
+  // navegación / carrito
   if (e.target.closest("[data-add],[data-inc],[data-dec],[data-rm]")) return;
   const card = e.target.closest("[data-id]");
   if (card) window.location.href = `producto.html?id=${encodeURIComponent(card.dataset.id)}`;
 });
-document.addEventListener("change", e => {
-  if (e.target.id === "ordenSel") { f.orden = e.target.value; renderCatalogo(); }
-});
 
 initCart();
 observarReveal();
-document.addEventListener("cart:add", renderCatalogo);
+document.addEventListener("cart:add", render);
