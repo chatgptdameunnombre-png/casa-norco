@@ -5,6 +5,8 @@ import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } fr
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 const CAT = document.querySelector("#catalogo")?.dataset.categoria || null;
+const MODO_SEMI = document.querySelector("#catalogo")?.dataset.modo === "seminuevo";
+const base = () => MODO_SEMI ? productos.filter(p => p.seminuevo) : productos.filter(p => p.categoria === CAT);
 
 let productos = [];
 let io;
@@ -38,10 +40,15 @@ function cardHTML(p) {
     ? `<img src="${p.imagen}" alt="${p.nombre}" loading="lazy" onerror="this.style.display='none';this.parentElement.querySelector('.card__ph').style.display='block'">
        <span class="card__ph" style="display:none">📷 Sin foto aún</span>`
     : `<span class="card__ph">📷 Foto pendiente<br><small>(el dueño la sube en el panel)</small></span>`;
+  const flags = [
+    p.preventa ? `<span class="card__flag card__flag--pre">Preventa</span>` : "",
+    p.seminuevo ? `<span class="card__flag card__flag--semi">Seminuevo</span>` : ""
+  ].join("");
   return `
     <article class="card reveal" data-id="${p.id}">
       <div class="card__media">
         <span class="card__cat">${p.subcategoria || p.categoria}</span>
+        ${flags}
         ${media}
       </div>
       <div class="card__body">
@@ -70,7 +77,7 @@ function grupo(lbl, key, valores, abierto) {
 function buildPanel() {
   const cont = $("#filtros");
   if (!cont) return;
-  const delaCat = productos.filter(p => p.categoria === CAT);
+  const delaCat = base();
   const subs = ["Todas", ...new Set(delaCat.map(p => p.subcategoria).filter(Boolean))];
   const marcas = ["Todas", ...[...new Set(delaCat.map(p => p.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b))];
   const generos = ["Todos", ...new Set(delaCat.map(p => p.genero).filter(Boolean))];
@@ -106,10 +113,10 @@ function marcarSel() {
 
 function render() {
   const gridEl = $("#grid");
-  if (!CAT || !gridEl) return;
+  if ((!CAT && !MODO_SEMI) || !gridEl) return;
   if (!panelListo && productos.length) buildPanel();
 
-  const lista = productos.filter(p => p.categoria === CAT)
+  const lista = base()
     .filter(p =>
       (f.sub === "Todas" || p.subcategoria === f.sub) &&
       (f.marca === "Todas" || p.marca === f.marca) &&
