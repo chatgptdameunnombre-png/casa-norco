@@ -1,20 +1,14 @@
-/* Secciones de la HOME: Seminuevos (fila de bicis) + Noticias (slider de banners, 1 a la vez). */
+/* Sección Noticias de la HOME: slider de banners (una noticia a la vez, foto grande + texto al lado). */
 import { firebaseConfig } from "./config.js";
-import { precioDesde, preciosVarian } from "./tallas.js";
 
 const FS = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`;
 const KEY = firebaseConfig.apiKey;
-const money = n => "$" + Number(n).toLocaleString("es-MX");
 
-/* -------- parser Firestore -> objeto plano -------- */
 function fsVal(v) {
   if (!v) return undefined;
   if ("stringValue" in v) return v.stringValue;
   if ("integerValue" in v) return parseInt(v.integerValue);
-  if ("doubleValue" in v) return v.doubleValue;
   if ("booleanValue" in v) return v.booleanValue;
-  if ("arrayValue" in v) return (v.arrayValue.values || []).map(fsVal);
-  if ("mapValue" in v) return fsFields(v.mapValue.fields || {});
   return undefined;
 }
 function fsFields(f) { const o = {}; for (const k in f) o[k] = fsVal(f[k]); return o; }
@@ -27,40 +21,6 @@ async function runQuery(field) {
   return (data || []).filter(x => x.document).map(x => ({ id: x.document.name.split("/").pop(), ...fsFields(x.document.fields) }));
 }
 
-/* ================= SEMINUEVOS ================= */
-function cardSemiHTML(p) {
-  const precioTxt = preciosVarian(p) ? `desde ${money(precioDesde(p))}` : money(precioDesde(p));
-  const media = p.imagen
-    ? `<img src="${p.imagen}" alt="${p.nombre}" loading="lazy">`
-    : `<span class="card__ph">📷</span>`;
-  return `
-    <a class="card reveal" href="producto.html?id=${encodeURIComponent(p.id)}" style="text-decoration:none">
-      <div class="card__media">
-        <span class="card__cat">${p.subcategoria || p.categoria || ""}</span>
-        <span class="card__flag card__flag--semi">Seminuevo</span>
-        ${media}
-      </div>
-      <div class="card__body">
-        <span class="card__brand">${p.marca || ""}</span>
-        <h3 class="card__name">${p.nombre}</h3>
-        <div class="card__foot"><div class="price">${precioTxt} <span>MXN</span></div></div>
-        <span class="add-btn" style="text-align:center">Ver bici</span>
-      </div>
-    </a>`;
-}
-
-async function cargarSeminuevos() {
-  const cont = document.querySelector("#homeSeminuevos");
-  if (!cont) return;
-  try {
-    const semis = await runQuery("seminuevo");
-    cont.innerHTML = semis.length ? semis.map(cardSemiHTML).join("")
-      : `<p style="color:var(--muted)">Pronto habrá seminuevos.</p>`;
-  } catch (e) { cont.innerHTML = ""; }
-  revelar();
-}
-
-/* ================= NOTICIAS (slider de banners) ================= */
 const ANUNCIOS = [
   { img: "fotos/instagram/Db6aJUvJjhs.jpg", tipo: "Taller",
     titulo: "Taller de mecánica básica para mujeres",
@@ -72,8 +32,8 @@ function bannerHTML(a, i) {
   const attrs = a.externo ? `target="_blank" rel="noopener"` : "";
   const cta = a.externo ? "Ver en Instagram ↗" : "Ver la bici →";
   return `
-    <div class="bslide${i === 0 ? " on" : ""}" style="background-image:url('${a.img}')">
-      <div class="bslide__shade"></div>
+    <div class="bslide${i === 0 ? " on" : ""}">
+      <div class="bslide__img"><img src="${a.img}" alt="${a.titulo}" loading="lazy"></div>
       <div class="bslide__c">
         ${a.tipo ? `<span class="bslide__tag">${a.tipo}</span>` : ""}
         <h3>${a.titulo}</h3>
@@ -125,7 +85,6 @@ function initSlider(sl) {
   auto();
 }
 
-/* -------- reveal -------- */
 let io;
 function revelar() {
   io?.disconnect();
@@ -133,5 +92,4 @@ function revelar() {
   document.querySelectorAll(".reveal:not(.in)").forEach(el => io.observe(el));
 }
 
-cargarSeminuevos();
 cargarNoticias();
