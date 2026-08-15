@@ -1,6 +1,6 @@
-import { db, MODO } from "./db.js";
-import { setProductos, initCart, enCarrito } from "./cart.js";
-import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js";
+import { db, MODO } from "./db.js?v=20";
+import { setProductos, initCart, enCarrito } from "./cart.js?v=20";
+import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=20";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
