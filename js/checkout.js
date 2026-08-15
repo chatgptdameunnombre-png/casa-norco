@@ -7,10 +7,12 @@ const CLABE_TRANSFERENCIA = "646180157099887766";
 const BANCO_TRANSFERENCIA = "STP";
 const BENEFICIARIO_TRANSFERENCIA = "Casa Norco (Cueva Bicycles)";
 
-let user = null, perfil = null;
+let user = null, perfil = null, esMayorista = false;
 db.onAuth(async u => {
   user = u;
   perfil = u ? await db.getPerfil(u.uid).catch(() => null) : null;
+  if (u) { const m = await db.getMiMayoreo(u.uid).catch(() => null); esMayorista = m?.estado === "aprobado"; }
+  else esMayorista = false;
 });
 
 export function iniciarPago({ items, productos, entrega, onError }) {
@@ -42,9 +44,12 @@ export function iniciarTransferencia({ productos, entrega, total, onError }) {
 function mostrarClabe({ productos, entrega, total, cliente, telefono, direccion }) {
   if (document.getElementById("trOverlay")) return;
   const ref = "CN-" + Date.now().toString().slice(-6);
+  const desc = esMayorista ? Math.round(total * 0.1) : 0;
+  const totalFinal = total - desc;
   const resumen = (productos || []).map(p => `${p.qty}x ${p.title}${p.talla ? " (T " + p.talla + ")" : ""}`).join(", ");
   const entregaTxt = entrega === "domicilio" ? `Entrega a domicilio: ${direccion || ""}` : "Recoge en tienda";
-  const waMsg = encodeURIComponent(`Hola, hice mi pedido en la web (ref ${ref}).\nProductos: ${resumen}\nTotal: ${money(total)}\n${entregaTxt}\nAdjunto mi comprobante de transferencia.`);
+  const descTxt = desc ? `\nDescuento mayoreo -10%: -${money(desc)}` : "";
+  const waMsg = encodeURIComponent(`Hola, hice mi pedido en la web (ref ${ref}).\nProductos: ${resumen}${descTxt}\nTotal: ${money(totalFinal)}\n${entregaTxt}\nAdjunto mi comprobante de transferencia.`);
   const waLink = `https://wa.me/${WHATSAPP_NUMERO}?text=${waMsg}`;
   const ov = document.createElement("div");
   ov.id = "trOverlay";
@@ -60,7 +65,8 @@ function mostrarClabe({ productos, entrega, total, cliente, telefono, direccion 
         <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Banco</span><b>${BANCO_TRANSFERENCIA}</b></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Beneficiario</span><b style="text-align:right">${BENEFICIARIO_TRANSFERENCIA}</b></div>
         <div style="margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">CLABE</span><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><b id="trClabe" style="font-size:18px;letter-spacing:1px">${CLABE_TRANSFERENCIA}</b><button id="trCopy" style="background:#26262c;border:none;color:#c6f032;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">Copiar</button></div></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Monto</span><b style="color:#c6f032;font-size:18px">${money(total)}</b></div>
+        ${desc ? `<div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Descuento mayoreo −10%</span><b style="color:#c6f032">-${money(desc)}</b></div>` : ""}
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Monto</span><b style="color:#c6f032;font-size:18px">${money(totalFinal)}</b></div>
         <div style="display:flex;justify-content:space-between"><span style="color:#9a9aa2;font-size:13px">Referencia</span><b>${ref}</b></div>
       </div>
       <a href="${waLink}" target="_blank" rel="noopener" style="display:block;text-align:center;background:#25D366;color:#fff;border-radius:12px;padding:14px;font-weight:800;font-size:15px;text-decoration:none">Enviar comprobante por WhatsApp</a>
