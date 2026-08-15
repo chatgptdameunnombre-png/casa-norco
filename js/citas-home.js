@@ -6,13 +6,9 @@ const dosDig = n => String(n).padStart(2, "0");
 const DIASEM = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const fechaBonita = f => new Date(f + "T00:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
-// hora "14:00" -> "2:00 pm"
-const to12 = hhmm => {
-  let [h, m] = hhmm.split(":").map(Number);
-  const ap = h < 12 ? "am" : "pm";
-  let h12 = h % 12; if (h12 === 0) h12 = 12;
-  return `${h12}:${dosDig(m || 0)} ${ap}`;
-};
+const to12 = hhmm => { let [h, m] = hhmm.split(":").map(Number); const ap = h < 12 ? "am" : "pm"; let h12 = h % 12; if (h12 === 0) h12 = 12; return `${h12}:${dosDig(m || 0)} ${ap}`; };
+const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`; };
+const abierto = fecha => !!HORARIOS[new Date(fecha + "T00:00:00").getDay()];
 
 async function postJSON(url, body) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -20,7 +16,7 @@ async function postJSON(url, body) {
 }
 function proximosDias(n) {
   const out = [], hoy = new Date();
-  for (let i = 0; i < 60 && out.length < n; i++) {
+  for (let i = 0; i < 30 && out.length < n; i++) {
     const x = new Date(hoy); x.setDate(hoy.getDate() + i);
     if (HORARIOS[x.getDay()]) out.push(x);
   }
@@ -30,8 +26,10 @@ function chipDia(x) {
   const f = `${x.getFullYear()}-${dosDig(x.getMonth() + 1)}-${dosDig(x.getDate())}`;
   return `<button type="button" class="dia-chip" data-fecha="${f}">${x.getDate()}<small>${DIASEM[x.getDay()]} ${MES[x.getMonth()]}</small></button>`;
 }
-const btnMas = `<button type="button" class="dia-chip mas-dias" style="border-style:dashed;color:#c6f032">+ más<small>días</small></button>`;
 function horasChips() { const hs = []; for (let h = 9; h <= 18; h++) hs.push(dosDig(h) + ":00"); return hs; }
+
+// min = hoy en los selectores de fecha
+["#ctOtroDia", "#cmOtroDiaR", "#cmOtroDiaD"].forEach(s => { if ($(s)) $(s).min = hoyStr(); });
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click", () => {
@@ -41,27 +39,31 @@ document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click",
 }));
 
 /* ---------- TALLER ---------- */
-let tDia = null, tHora = null, tNdias = 8;
-function pintarDiasTaller() {
-  if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(tNdias).map(chipDia).join("") + btnMas;
-}
-pintarDiasTaller();
+let tDia = null, tHora = null;
+if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(6).map(chipDia).join("");
 
-$("#ctDias")?.addEventListener("click", async e => {
-  if (e.target.closest(".mas-dias")) { tNdias += 8; pintarDiasTaller(); return; }
-  const c = e.target.closest(".dia-chip"); if (!c) return;
-  tDia = c.dataset.fecha; tHora = null;
-  document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === c));
+async function seleccionarDiaTaller(fecha, chipEl) {
+  tDia = fecha; tHora = null;
+  document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === chipEl));
+  if (!chipEl && $("#ctDias .dia-chip.on")) $("#ctDias .dia-chip.on").classList.remove("on");
   $("#ctBloqueDatos").hidden = true; $("#ctMsg").textContent = "";
   const slots = $("#ctSlots"); $("#ctBloqueHora").hidden = false;
+  if (!abierto(fecha)) { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">Ese día estamos cerrados (domingo). Elige otro.</span>`; return; }
   slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">Buscando horarios libres…</span>`;
   try {
-    const r = await postJSON(CITAS_TALLER_HORARIOS, { fecha: tDia });
+    const r = await postJSON(CITAS_TALLER_HORARIOS, { fecha });
     const libres = r && Array.isArray(r.horarios) ? r.horarios : [];
     if (!libres.length) { slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Elige otro.</span>`; return; }
     slots.innerHTML = libres.map(h => `<button type="button" class="slot-chip" data-hora="${h}">${to12(h)} – ${to12(dosDig(Number(h.slice(0, 2)) + 2) + ":00")}</button>`).join("");
   } catch { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">No se pudo cargar. Intenta de nuevo.</span>`; }
+}
+$("#ctDias")?.addEventListener("click", e => {
+  const c = e.target.closest(".dia-chip"); if (!c) return;
+  if ($("#ctOtroDia")) $("#ctOtroDia").value = "";
+  seleccionarDiaTaller(c.dataset.fecha, c);
 });
+$("#ctOtroDia")?.addEventListener("change", e => { if (e.target.value) seleccionarDiaTaller(e.target.value, null); });
+
 $("#ctSlots")?.addEventListener("click", e => {
   const c = e.target.closest(".slot-chip"); if (!c) return;
   tHora = c.dataset.hora;
@@ -83,19 +85,17 @@ $("#ctGo")?.addEventListener("click", async () => {
 });
 
 /* ---------- MALETA ---------- */
-let mR = null, mRh = null, mD = null, mDh = null, mNr = 8, mNd = 8;
-function pintarMaleta() {
-  $("#cmDiasR").innerHTML = proximosDias(mNr).map(chipDia).join("") + btnMas;
-  $("#cmDiasD").innerHTML = proximosDias(mNd).map(chipDia).join("") + btnMas;
+let mR = null, mRh = null, mD = null, mDh = null;
+if ($("#cmDiasR")) {
+  $("#cmDiasR").innerHTML = proximosDias(6).map(chipDia).join("");
+  $("#cmDiasD").innerHTML = proximosDias(6).map(chipDia).join("");
   const chips = q => q.map(h => `<button type="button" class="slot-chip" data-h="${h}">${to12(h)}</button>`).join("");
-  if (!$("#cmHorasR").dataset.filled) { $("#cmHorasR").innerHTML = chips(horasChips()); $("#cmHorasR").dataset.filled = "1"; }
-  if (!$("#cmHorasD").dataset.filled) { $("#cmHorasD").innerHTML = chips(horasChips()); $("#cmHorasD").dataset.filled = "1"; }
+  $("#cmHorasR").innerHTML = chips(horasChips());
+  $("#cmHorasD").innerHTML = chips(horasChips());
 }
-if ($("#cmDiasR")) pintarMaleta();
 
-// buscar hora específica (filtra los chips por lo que escribas: "2 pm", "14", etc.)
-["#cmBuscarR|#cmHorasR", "#cmBuscarD|#cmHorasD"].forEach(par => {
-  const [inp, cont] = par.split("|");
+// buscar hora específica
+[["#cmBuscarR", "#cmHorasR"], ["#cmBuscarD", "#cmHorasD"]].forEach(([inp, cont]) => {
   $(inp)?.addEventListener("input", e => {
     const q = e.target.value.toLowerCase().trim();
     document.querySelectorAll(`${cont} .slot-chip`).forEach(c => {
@@ -104,23 +104,28 @@ if ($("#cmDiasR")) pintarMaleta();
   });
 });
 
-function bindDias(sel, cb) {
-  $(sel)?.addEventListener("click", e => {
-    if (e.target.closest(".mas-dias")) { cb(null, true); return; }
+function bindDias(selCont, selFecha, set) {
+  $(selCont)?.addEventListener("click", e => {
     const c = e.target.closest(".dia-chip"); if (!c) return;
-    $(sel).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
-    cb(c.dataset.fecha);
+    if ($(selFecha)) $(selFecha).value = "";
+    $(selCont).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
+    set(c.dataset.fecha);
+  });
+  $(selFecha)?.addEventListener("change", e => {
+    if (!e.target.value) return;
+    $(selCont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
+    set(e.target.value);
   });
 }
-function bindHoras(sel, cb) {
+function bindHoras(sel, set) {
   $(sel)?.addEventListener("click", e => {
     const c = e.target.closest(".slot-chip"); if (!c) return;
     $(sel).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
-    cb(c.dataset.h);
+    set(c.dataset.h);
   });
 }
-bindDias("#cmDiasR", (v, mas) => { if (mas) { mNr += 8; pintarMaleta(); } else mR = v; });
-bindDias("#cmDiasD", (v, mas) => { if (mas) { mNd += 8; pintarMaleta(); } else mD = v; });
+bindDias("#cmDiasR", "#cmOtroDiaR", v => mR = v);
+bindDias("#cmDiasD", "#cmOtroDiaD", v => mD = v);
 bindHoras("#cmHorasR", v => mRh = v);
 bindHoras("#cmHorasD", v => mDh = v);
 
