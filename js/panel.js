@@ -44,7 +44,7 @@ function render() {
   $("#pList").innerHTML = productos.map(p => `
     <div class="p-row">
       <img class="p-thumb" src="${p.imagen || ''}" alt="" onerror="this.style.visibility='hidden'">
-      <div class="p-name"><b>${p.nombre}</b><span>${p.marca} · ${p.subcategoria || p.categoria}</span></div>
+      <div class="p-name"><b>${p.nombre}${p.seminuevo ? ` <span style="font-size:10px;font-weight:700;color:#c6f032;border:1px solid #c6f032;border-radius:5px;padding:1px 5px;vertical-align:middle;letter-spacing:.05em">USADO</span>` : ""}</b><span>${p.marca} · ${p.subcategoria || p.categoria}</span></div>
       <span class="hide-sm">${p.categoria}</span>
       <span class="hide-sm">${money(p.precio)}</span>
       <span>${stockPill(p.stock)}</span>
@@ -163,6 +163,7 @@ function editar(id) {
   poblarSub($("#pCategoria").value, p.subcategoria || "");
   $("#pPrecio").value = p.precio;
   $("#pStock").value = p.stock;
+  $("#pUsado").checked = !!p.seminuevo;
   const tipo = p.tallaTipo === "tallas" ? "tallas" : "universal";
   $("#pTallaTipo").value = tipo;
   aplicarTallaTipo(tipo);
@@ -198,7 +199,8 @@ $("#prodForm").addEventListener("submit", async e => {
     specs: $("#pSpecs").value.split("\n").map(s => s.trim()).filter(Boolean),
     imagenes,
     imagen: imagenes[0] || "",
-    tallaTipo: tipo
+    tallaTipo: tipo,
+    seminuevo: $("#pUsado").checked
   };
   if (tipo === "tallas") {
     const tallas = [];
