@@ -92,6 +92,10 @@
             <div id="tallasEditor"></div>
             <p class="hint-foto">Activa las tallas que manejas y pon su stock. El precio por talla es opcional: si lo dejas vacío, usa el "Precio" de arriba.</p>
           </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0"><input type="checkbox" id="pUsado" style="width:auto"> Producto usado</label>
+            <p class="hint-foto">Márcalo si es de segunda mano. Aparece solo en la sección <b>Usados</b> (su propio inventario). Ponle un precio más bajo que el de nuevo.</p>
+          </div>
           <div class="field"><label>Descripción</label><textarea class="input" id="pDesc" rows="3" placeholder="Describe el producto para el cliente…"></textarea></div>
           <div class="field"><label>Especificaciones (una por línea)</label><textarea class="input" id="pSpecs" rows="4" placeholder="Cuadro de aluminio&#10;Grupo Shimano&#10;Rodada 29&quot;"></textarea></div>
           <div class="field">
@@ -111,6 +115,6 @@
   </div>
 
   <div class="toast-wrap" id="toasts"></div>
-  <script type="module" src="js/panel.js"></script>
+  <script type="module" src="js/panel.js?v=2"></script>
 </body>
 </html>
