@@ -13,8 +13,12 @@ let productos = [];
 let inicializado = false;
 let fotosActuales = [];
 
+const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
+
 db.onAuth(user => {
   if (!user) { window.location.replace("admin.html"); return; }
+  if (!esDueno(user)) { window.location.replace("index.html"); return; }
   $("#loader").hidden = true;
   $("#dash").hidden = false;
   window.scrollTo(0, 0);
