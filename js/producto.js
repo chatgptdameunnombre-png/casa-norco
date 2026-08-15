@@ -1,8 +1,9 @@
-import { db, MODO } from "./db.js?v=20";
-import { setProductos, initCart, enCarrito, addCart } from "./cart.js?v=20";
-import { ENVIO_DOMICILIO } from "./config.js?v=20";
-import { iniciarPago } from "./checkout.js?v=20";
-import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=20";
+import { db, MODO } from "./db.js?v=21";
+import { setProductos, initCart, enCarrito, addCart } from "./cart.js?v=21";
+import { ENVIO_DOMICILIO } from "./config.js?v=21";
+import { iniciarPago } from "./checkout.js?v=21";
+import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=21";
+import { onMayoreo, precioHTML, precioMay } from "./mayoreo.js?v=21";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -26,6 +27,7 @@ db.onProducts(async list => {
   }
   render();
 });
+onMayoreo(() => render());
 
 function tallaBtn(t, on) {
   const ag = Number(t.stock) <= 0;
@@ -49,7 +51,7 @@ function render() {
   const precioActual = sized ? (tallaSel ? precioTalla(p, tallaSel) : precioDesde(p)) : Number(p.precio || 0);
   const st = etiquetaStock(stockActual);
   const puede = sized ? (!!tallaSel && stockDeTalla(p, tallaSel) > 0) : stockActual > 0;
-  const precioLinea = (sized && !tallaSel && preciosVarian(p)) ? `desde ${money(precioDesde(p))}` : money(precioActual);
+  const precioLinea = (sized && !tallaSel && preciosVarian(p)) ? "desde " + precioHTML(precioDesde(p)) : precioHTML(precioActual);
   const labelAdd = (sized && !tallaSel) ? "Elige tu talla" : (puede ? (enCarrito(p.id, sized ? tallaSel : null) >= stockActual ? "Máximo" : "Agregar al carrito") : "Agotado");
   const labelBuy = (sized && !tallaSel) ? "Elige tu talla" : (puede ? "Comprar" : "Agotado");
   const topeAdd = puede && enCarrito(p.id, sized ? tallaSel : null) >= stockActual;
@@ -158,7 +160,7 @@ function actualizarTotal() {
   const el = $("#prodTotal");
   if (!p || !el) return;
   el.style.color = "#c6f032";
-  const base = precioSel(p);
+  const base = precioMay(precioSel(p));
   if (entregaProd === "domicilio") el.textContent = `Total: ${money(base + ENVIO_DOMICILIO)} (con envío)`;
   else if (entregaProd === "tienda") el.textContent = `Total: ${money(base)} (recoges en tienda)`;
   else el.textContent = "";
