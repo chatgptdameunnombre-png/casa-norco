@@ -1,5 +1,5 @@
-import { COBRO_WEBHOOK, ENVIO_DOMICILIO, WHATSAPP_NUMERO } from "./config.js";
-import { db } from "./db.js";
+import { COBRO_WEBHOOK, ENVIO_DOMICILIO, WHATSAPP_NUMERO } from "./config.js?v=20";
+import { db } from "./db.js?v=20";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 
