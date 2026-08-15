@@ -13,7 +13,7 @@ let productos = [];
 let inicializado = false;
 let fotosActuales = [];
 
-const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const OWNER_EMAILS = ["admincasanorco@gmail.com"];
 const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
 
 db.onAuth(user => {
