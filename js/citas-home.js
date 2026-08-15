@@ -10,6 +10,7 @@ const fechaBonita = f => new Date(f + "T00:00:00").toLocaleDateString("es-MX", {
 const to12 = hhmm => { let [h, m] = hhmm.split(":").map(Number); const ap = h < 12 ? "am" : "pm"; let h12 = h % 12; if (h12 === 0) h12 = 12; return `${h12}:${dosDig(m || 0)} ${ap}`; };
 const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`; };
 const abierto = f => !!HORARIOS[new Date(f + "T00:00:00").getDay()];
+const horaValida = hhmm => { const h = Number(hhmm.split(":")[0]); return h >= 9 && h <= 18; };
 
 async function postJSON(url, body) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -26,12 +27,11 @@ function proximosDias(n) {
   return out;
 }
 const chipDia = x => `<button type="button" class="dia-chip" data-fecha="${x.getFullYear()}-${dosDig(x.getMonth() + 1)}-${dosDig(x.getDate())}">${x.getDate()}<small>${DIASEM[x.getDay()]} ${MES[x.getMonth()]}</small></button>`;
-const chipEtiquetaFecha = f => { const x = new Date(f + "T00:00:00"); return `${x.getDate()} ${MES[x.getMonth()]}`; };
 function horasChips() { const hs = []; for (let h = 9; h <= 18; h++) hs.push(dosDig(h) + ":00"); return hs; }
-function abrirPicker(inp) { const i = $(inp); if (!i) return; try { i.showPicker(); } catch { i.click(); } }
 
-// límites hoy → diciembre en los inputs de fecha ocultos
+// límites hoy → diciembre en todos los inputs nativos
 ["#ctOtroDia", "#cmOtroDiaR", "#cmOtroDiaD"].forEach(s => { if ($(s)) { $(s).min = hoyStr(); $(s).max = MAX; } });
+["#ctOtraHora", "#cmOtraHoraR", "#cmOtraHoraD"].forEach(s => { if ($(s)) { $(s).min = "09:00"; $(s).max = "19:00"; } });
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click", () => {
@@ -44,12 +44,11 @@ document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click",
 let tDia = null, tHora = null;
 if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(6).map(chipDia).join("");
 
-async function seleccionarDiaTaller(fecha, chipEl) {
+async function seleccionarDiaTaller(fecha, desdeChip) {
   if (fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Por ahora solo agendamos hasta diciembre."; return; }
   tDia = fecha; tHora = null;
-  document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === chipEl));
-  $("#ctOtraFecha").classList.toggle("on", !chipEl);
-  if (!chipEl) $("#ctOtraFecha").innerHTML = `📅 ${chipEtiquetaFecha(fecha)}`;
+  document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === desdeChip));
+  if (!desdeChip && $("#ctOtroDia").value !== fecha) $("#ctOtroDia").value = fecha;
   $("#ctBloqueDatos").hidden = true; $("#ctMsg").textContent = "";
   const slots = $("#ctSlots"); $("#ctBloqueHora").hidden = false;
   if (!abierto(fecha)) { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">Ese día estamos cerrados (domingo). Elige otro.</span>`; return; }
@@ -57,23 +56,30 @@ async function seleccionarDiaTaller(fecha, chipEl) {
   try {
     const r = await postJSON(CITAS_TALLER_HORARIOS, { fecha });
     const libres = r && Array.isArray(r.horarios) ? r.horarios : [];
-    if (!libres.length) { slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Elige otro.</span>`; return; }
+    if (!libres.length) { slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Usa "¿Otra hora?" o elige otro día.</span>`; return; }
     slots.innerHTML = libres.map(h => `<button type="button" class="slot-chip" data-hora="${h}">${to12(h)}</button>`).join("");
   } catch { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">No se pudo cargar. Intenta de nuevo.</span>`; }
 }
+function fijarHoraTaller(hora, desdeChip) {
+  tHora = hora;
+  document.querySelectorAll("#ctSlots .slot-chip").forEach(x => x.classList.toggle("on", x === desdeChip));
+  $("#ctBloqueDatos").hidden = false;
+}
 $("#ctDias")?.addEventListener("click", e => {
   const c = e.target.closest(".dia-chip"); if (!c) return;
-  $("#ctOtraFecha").innerHTML = "📅 Otra fecha"; if ($("#ctOtroDia")) $("#ctOtroDia").value = "";
+  if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
   seleccionarDiaTaller(c.dataset.fecha, c);
 });
-$("#ctOtraFecha")?.addEventListener("click", () => abrirPicker("#ctOtroDia"));
 $("#ctOtroDia")?.addEventListener("change", e => { if (e.target.value) seleccionarDiaTaller(e.target.value, null); });
-
 $("#ctSlots")?.addEventListener("click", e => {
   const c = e.target.closest(".slot-chip"); if (!c) return;
-  tHora = c.dataset.hora;
-  document.querySelectorAll("#ctSlots .slot-chip").forEach(x => x.classList.toggle("on", x === c));
-  $("#ctBloqueDatos").hidden = false;
+  if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
+  fijarHoraTaller(c.dataset.hora, c);
+});
+$("#ctOtraHora")?.addEventListener("change", e => {
+  const v = e.target.value; if (!v) return;
+  if (!horaValida(v)) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "El taller abre de 9:00 am a 7:00 pm."; e.target.value = ""; return; }
+  $("#ctMsg").textContent = ""; fijarHoraTaller(v, null);
 });
 $("#ctGo")?.addEventListener("click", async () => {
   const nombre = $("#ctNombre").value.trim(), tel = $("#ctTel").value.trim(), servicio = $("#ctServicio").value.trim();
@@ -84,11 +90,12 @@ $("#ctGo")?.addEventListener("click", async () => {
   try {
     const r = await postJSON(CITAS_TALLER_AGENDAR, { fecha: tDia, hora: tHora, nombre, telefono: tel, servicio });
     if (r && r.ok) $("#ctTaller").innerHTML = `<div class="citas-ok">✓ ¡Listo! Tu cita quedó para el <b>${fechaBonita(tDia)}</b> a las <b>${to12(tHora)}</b>.<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Te esperamos.</span></div>`;
+    else if (r && r.mensaje) { msg.textContent = r.mensaje; btn.disabled = false; btn.textContent = "Agendar cita"; }
     else throw new Error();
   } catch { msg.textContent = "No se pudo agendar. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Agendar cita"; }
 });
 
-/* ---------- MALETA (botones) ---------- */
+/* ---------- MALETA (botones + otro día / otra hora) ---------- */
 let mR = null, mRh = null, mD = null, mDh = null;
 if ($("#cmDiasR")) {
   $("#cmDiasR").innerHTML = proximosDias(6).map(chipDia).join("");
@@ -97,34 +104,38 @@ if ($("#cmDiasR")) {
   $("#cmHorasR").innerHTML = hc();
   $("#cmHorasD").innerHTML = hc();
 }
-function bindDiasMaleta(cont, btn, inp, set) {
+function bindDias(cont, inp, set) {
   $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".dia-chip"); if (!c) return;
-    $(btn).innerHTML = "📅 Otra fecha"; if ($(inp)) $(inp).value = "";
+    if ($(inp)) $(inp).value = "";
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
-    $(btn).classList.remove("on");
     set(c.dataset.fecha);
   });
-  $(btn)?.addEventListener("click", () => abrirPicker(inp));
   $(inp)?.addEventListener("change", e => {
     if (!e.target.value) return;
-    if (e.target.value > MAX) { alert("Solo apartamos hasta diciembre."); return; }
+    if (e.target.value > MAX) { alert("Solo apartamos hasta diciembre."); e.target.value = ""; return; }
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
-    $(btn).classList.add("on"); $(btn).innerHTML = "📅 " + chipEtiquetaFecha(e.target.value);
     set(e.target.value);
   });
 }
-function bindHoras(sel, set) {
-  $(sel)?.addEventListener("click", e => {
+function bindHoras(cont, inp, set) {
+  $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".slot-chip"); if (!c) return;
-    $(sel).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
+    if ($(inp)) $(inp).value = "";
+    $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
     set(c.dataset.h);
   });
+  $(inp)?.addEventListener("change", e => {
+    const v = e.target.value; if (!v) return;
+    if (!horaValida(v)) { alert("Horario de 9:00 am a 7:00 pm."); e.target.value = ""; return; }
+    $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.remove("on"));
+    set(v);
+  });
 }
-bindDiasMaleta("#cmDiasR", "#cmOtraFechaR", "#cmOtroDiaR", v => mR = v);
-bindDiasMaleta("#cmDiasD", "#cmOtraFechaD", "#cmOtroDiaD", v => mD = v);
-bindHoras("#cmHorasR", v => mRh = v);
-bindHoras("#cmHorasD", v => mDh = v);
+bindDias("#cmDiasR", "#cmOtroDiaR", v => mR = v);
+bindDias("#cmDiasD", "#cmOtroDiaD", v => mD = v);
+bindHoras("#cmHorasR", "#cmOtraHoraR", v => mRh = v);
+bindHoras("#cmHorasD", "#cmOtraHoraD", v => mDh = v);
 
 $("#cmGo")?.addEventListener("click", async () => {
   const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
