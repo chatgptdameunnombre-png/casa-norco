@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 
-const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const OWNER_EMAILS = ["admincasanorco@gmail.com"];
 const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
 
 const $ = s => document.querySelector(s);
