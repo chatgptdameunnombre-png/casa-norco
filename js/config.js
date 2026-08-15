@@ -15,6 +15,10 @@ export const COBRO_WEBHOOK = "https://n8n.srv1473142.hstgr.cloud/webhook/casanor
 
 export const ASESOR_WEBHOOK = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-asesor";
 
+export const CITAS_TALLER_HORARIOS = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-taller-horarios";
+export const CITAS_TALLER_AGENDAR = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-taller-agendar";
+export const CITAS_MALETA_AGENDAR = "https://n8n.srv1473142.hstgr.cloud/webhook/casanorco-maleta-agendar";
+
 export const NEGOCIO = {
   nombre: "Casa Norco",
   claim: "Bicicletas premium, taller y café",
