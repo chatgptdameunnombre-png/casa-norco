@@ -1,8 +1,8 @@
-import { db, MODO } from "./db.js";
-import { setProductos, initCart, enCarrito, addCart } from "./cart.js";
-import { ENVIO_DOMICILIO } from "./config.js";
-import { iniciarPago } from "./checkout.js";
-import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js";
+import { db, MODO } from "./db.js?v=20";
+import { setProductos, initCart, enCarrito, addCart } from "./cart.js?v=20";
+import { ENVIO_DOMICILIO } from "./config.js?v=20";
+import { iniciarPago } from "./checkout.js?v=20";
+import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=20";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
