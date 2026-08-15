@@ -166,23 +166,21 @@
       <div id="ctMaleta" hidden>
         <div class="maleta-grid">
           <div class="maleta-col">
-            <div class="citas-paso">1 · ¿Qué día la recoges?</div>
-            <div class="citas-dias" id="cmDiasR"></div>
-            <div style="margin-top:8px"><input type="date" id="cmOtroDiaR" class="citas-inp" style="max-width:190px" title="Otra fecha"></div>
-            <div class="citas-paso">Hora de recoger</div>
-            <input id="cmBuscarR" class="citas-inp" placeholder="🔎 Buscar hora (ej. 2 pm, 14)" style="margin-bottom:8px">
-            <div class="citas-slots" id="cmHorasR"></div>
+            <div class="citas-paso">La recoges</div>
+            <label class="cLbl" style="color:#9a9aa2;font-size:12px">Día</label>
+            <input type="date" id="cmDiaR" class="citas-inp">
+            <label class="cLbl" style="color:#9a9aa2;font-size:12px">Hora</label>
+            <input type="time" id="cmHoraR" class="citas-inp">
           </div>
           <div class="maleta-col">
-            <div class="citas-paso">2 · ¿Qué día la regresas?</div>
-            <div class="citas-dias" id="cmDiasD"></div>
-            <div style="margin-top:8px"><input type="date" id="cmOtroDiaD" class="citas-inp" style="max-width:190px" title="Otra fecha"></div>
-            <div class="citas-paso">Hora de regreso</div>
-            <input id="cmBuscarD" class="citas-inp" placeholder="🔎 Buscar hora (ej. 2 pm, 14)" style="margin-bottom:8px">
-            <div class="citas-slots" id="cmHorasD"></div>
+            <div class="citas-paso">La regresas</div>
+            <label class="cLbl" style="color:#9a9aa2;font-size:12px">Día</label>
+            <input type="date" id="cmDiaD" class="citas-inp">
+            <label class="cLbl" style="color:#9a9aa2;font-size:12px">Hora</label>
+            <input type="time" id="cmHoraD" class="citas-inp">
           </div>
         </div>
-        <div class="citas-paso">3 · Tus datos</div>
+        <div class="citas-paso">Tus datos</div>
         <input id="cmNombre" class="citas-inp" placeholder="Tu nombre">
         <input id="cmTel" class="citas-inp" placeholder="Tu teléfono" inputmode="tel">
         <button id="cmGo" class="citas-btn">Apartar maleta</button>
@@ -359,7 +357,7 @@
   })();
   </script>
   <script type="module" src="js/home-secciones.js?v=21"></script>
-  <script type="module" src="js/citas-home.js?v=22"></script>
+  <script type="module" src="js/citas-home.js?v=23"></script>
   <script type="module" src="js/auth.js?v=21"></script>
 </body>
 </html>
