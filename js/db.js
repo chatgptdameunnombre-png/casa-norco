@@ -28,7 +28,8 @@ async function crearImplFirebase() {
     deleteDoc, getDocs, setDoc, deleteField, query, orderBy
   } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js");
   const {
-    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+    getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+    createUserWithEmailAndPassword, sendPasswordResetEmail
   } = await import("https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js");
 
   const app = initializeApp(firebaseConfig);
@@ -37,6 +38,7 @@ async function crearImplFirebase() {
   const col = collection(fdb, "productos");
   const refProd = id => doc(fdb, "productos", id);
   const refFotos = id => doc(fdb, "productos_fotos", id);
+  const refCliente = uid => doc(fdb, "clientes", uid);
 
   async function escribirFotos(id, extra) {
     if (extra.length) await setDoc(refFotos(id), { imagenes: extra });
@@ -78,8 +80,12 @@ async function crearImplFirebase() {
       return d.imagen ? [d.imagen] : [];
     },
     login(email, pass) { return signInWithEmailAndPassword(auth, email, pass); },
+    registrar(email, pass) { return createUserWithEmailAndPassword(auth, email, pass); },
+    resetPass(email) { return sendPasswordResetEmail(auth, email); },
     logout() { return signOut(auth); },
-    onAuth(cb) { return onAuthStateChanged(auth, u => cb(u ? { email: u.email } : null)); },
+    onAuth(cb) { return onAuthStateChanged(auth, u => cb(u ? { email: u.email, uid: u.uid } : null)); },
+    async guardarPerfil(uid, data) { await setDoc(refCliente(uid), data, { merge: true }); },
+    async getPerfil(uid) { const s = await getDoc(refCliente(uid)); return s.exists() ? s.data() : null; },
     async seedIfEmpty() {
       const snap = await getDocs(col);
       if (snap.empty) {
@@ -178,7 +184,7 @@ function crearImplDemo() {
     },
     async login(email, pass) {
       if (email.trim().toLowerCase() === DEMO_USER.email && pass === DEMO_USER.pass) {
-        localStorage.setItem(LS_AUTH, JSON.stringify({ email: DEMO_USER.email }));
+        localStorage.setItem(LS_AUTH, JSON.stringify({ email: DEMO_USER.email, uid: "demo_owner" }));
         notificarAuth();
         return true;
       }
@@ -186,6 +192,15 @@ function crearImplDemo() {
       err.code = "auth/invalid-credential";
       throw err;
     },
+    async registrar(email, pass) {
+      const e = email.trim().toLowerCase();
+      localStorage.setItem(LS_AUTH, JSON.stringify({ email: e, uid: "demo_" + e }));
+      notificarAuth();
+      return true;
+    },
+    async resetPass() { return true; },
+    async guardarPerfil(uid, data) { localStorage.setItem("bici_perfil_" + uid, JSON.stringify(data)); },
+    async getPerfil(uid) { try { return JSON.parse(localStorage.getItem("bici_perfil_" + uid)); } catch { return null; } },
     async logout() { localStorage.removeItem(LS_AUTH); notificarAuth(); },
     onAuth(cb) { authListeners.add(cb); cb(usuarioActual()); return () => authListeners.delete(cb); },
     async seedIfEmpty() {
