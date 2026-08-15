@@ -1,6 +1,6 @@
-import { ENVIO_DOMICILIO } from "./config.js";
-import { iniciarPago, iniciarTransferencia } from "./checkout.js";
-import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js";
+import { ENVIO_DOMICILIO } from "./config.js?v=20";
+import { iniciarPago, iniciarTransferencia } from "./checkout.js?v=20";
+import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js?v=20";
 
 const CART_KEY = "bici_cart";
 const $ = s => document.querySelector(s);
