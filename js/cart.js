@@ -1,6 +1,7 @@
-import { ENVIO_DOMICILIO } from "./config.js?v=20";
-import { iniciarPago, iniciarTransferencia } from "./checkout.js?v=20";
-import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js?v=20";
+import { ENVIO_DOMICILIO } from "./config.js?v=21";
+import { iniciarPago, iniciarTransferencia } from "./checkout.js?v=21";
+import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js?v=21";
+import { onMayoreo, precioHTML, precioMay } from "./mayoreo.js?v=21";
 
 const CART_KEY = "bici_cart";
 const $ = s => document.querySelector(s);
@@ -70,7 +71,7 @@ function itemsCarrito() {
 export function renderCart() {
   const items = itemsCarrito();
   const count = items.reduce((a, i) => a + i.qty, 0);
-  const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
+  const subtotal = items.reduce((a, i) => a + i.qty * precioMay(i.precio), 0);
   const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
   const countEl = $("#cartCount");
   if (countEl) countEl.textContent = count;
@@ -87,7 +88,7 @@ export function renderCart() {
       <img class="line__img" src="${i.imagen || ''}" alt="" onerror="this.style.visibility='hidden'">
       <div class="line__info">
         <div class="line__name">${i.nombre}${i.talla ? ` <small style="color:#9a9aa2">· Talla ${i.talla}</small>` : ""}</div>
-        <div class="line__price">${money(i.precio)}</div>
+        <div class="line__price">${precioHTML(i.precio)}</div>
         <div class="qty">
           <button data-dec="${i.key}">−</button>
           <span>${i.qty}</span>
@@ -169,6 +170,7 @@ export function initCart() {
   $("#closeCart")?.addEventListener("click", closeDrawer);
   $("#overlay")?.addEventListener("click", closeDrawer);
   $("#checkout")?.addEventListener("click", checkout);
+  onMayoreo(() => renderCart());
   const foot = $("#cartFoot");
   if (foot && !$("#entregaCart")) {
     const wrap = document.createElement("div");
