@@ -1,4 +1,4 @@
-import { db } from "./db.js";
+import { db } from "./db.js?v=20";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
