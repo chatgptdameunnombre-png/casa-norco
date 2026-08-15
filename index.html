@@ -49,7 +49,7 @@
         <a href="accesorios.html">Accesorios</a>
         <a href="seminuevos.html">Usados</a>
         <a href="#noticias">Noticias</a>
-        <a href="citas.html">Citas</a>
+        <a href="#citas">Citas</a>
         <a href="#visitanos">Visítanos</a>
       </nav>
     </div>
@@ -106,6 +106,84 @@
       <span class="rule"></span>
     </div>
     <div id="homeNoticias"></div>
+  </section>
+
+  <!-- ================= AGENDA TU CITA ================= -->
+  <style>
+    .citas-box { background:#141416; border:1px solid #26262c; border-radius:20px; padding:24px; max-width:760px; margin:0 auto; }
+    .citas-tabs { display:flex; gap:8px; background:#0e0e11; border:1px solid #26262c; border-radius:12px; padding:4px; margin-bottom:20px; }
+    .citas-tab { flex:1; padding:12px; border:none; border-radius:9px; background:none; color:#9a9aa2; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; }
+    .citas-tab.on { background:#c6f032; color:#0a0a0a; }
+    .citas-paso { font-size:13px; font-weight:700; color:#c6f032; margin:16px 0 10px; letter-spacing:.02em; }
+    .citas-dias, .citas-slots { display:flex; flex-wrap:wrap; gap:8px; }
+    .dia-chip, .slot-chip { padding:10px 14px; border-radius:12px; border:1px solid #2a2a30; background:#17171b; color:#f4f4f5; font-size:13px; font-weight:700; cursor:pointer; text-align:center; }
+    .dia-chip small { display:block; font-size:11px; color:#9a9aa2; font-weight:500; text-transform:capitalize; }
+    .dia-chip.on, .slot-chip.on { border-color:#c6f032; background:rgba(198,240,50,.14); color:#c6f032; }
+    .dia-chip.on small { color:#c6f032; }
+    .citas-inp { width:100%; padding:12px 14px; border-radius:11px; border:1px solid #2a2a30; background:#0e0e11; color:#f4f4f5; font-size:14px; outline:none; box-sizing:border-box; margin-bottom:10px; }
+    .citas-inp:focus { border-color:#c6f032; }
+    .citas-btn { width:100%; background:#c6f032; color:#0a0a0a; border:none; border-radius:12px; padding:15px; font-weight:800; font-size:15px; cursor:pointer; }
+    .citas-btn:disabled { opacity:.5; cursor:default; }
+    .citas-msg { min-height:20px; font-size:13.5px; margin-top:12px; }
+    .citas-ok { background:rgba(198,240,50,.1); border:1px solid #3a4a10; border-radius:12px; padding:16px; text-align:center; color:#c6f032; font-weight:700; }
+    .maleta-col { flex:1; min-width:0; }
+    .maleta-grid { display:flex; gap:14px; flex-wrap:wrap; }
+    @media(max-width:600px){ .maleta-grid { flex-direction:column; } }
+  </style>
+  <section class="wrap sec" id="citas">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Reserva en línea</span>
+      <h2>Agenda tu cita</h2>
+      <p>Aparta tu lugar en el taller o renta una maleta. Sin llamadas, en unos clics.</p>
+      <span class="rule"></span>
+    </div>
+    <div class="citas-box reveal">
+      <div class="citas-tabs">
+        <button class="citas-tab on" data-ct="taller">🔧 Taller</button>
+        <button class="citas-tab" data-ct="maleta">🧳 Maleta</button>
+      </div>
+
+      <!-- TALLER -->
+      <div id="ctTaller">
+        <div class="citas-paso">1 · Elige el día</div>
+        <div class="citas-dias" id="ctDias"></div>
+        <div id="ctBloqueHora" hidden>
+          <div class="citas-paso">2 · Elige la hora</div>
+          <div class="citas-slots" id="ctSlots"></div>
+        </div>
+        <div id="ctBloqueDatos" hidden>
+          <div class="citas-paso">3 · Tus datos</div>
+          <input id="ctNombre" class="citas-inp" placeholder="Tu nombre">
+          <input id="ctTel" class="citas-inp" placeholder="Tu teléfono" inputmode="tel">
+          <input id="ctServicio" class="citas-inp" placeholder="¿Qué necesitas? (opcional)">
+          <button id="ctGo" class="citas-btn">Agendar cita</button>
+        </div>
+        <div class="citas-msg" id="ctMsg"></div>
+      </div>
+
+      <!-- MALETA -->
+      <div id="ctMaleta" hidden>
+        <div class="maleta-grid">
+          <div class="maleta-col">
+            <div class="citas-paso">1 · ¿Qué día la recoges?</div>
+            <div class="citas-dias" id="cmDiasR"></div>
+            <div class="citas-paso">Hora de recoger</div>
+            <div class="citas-slots" id="cmHorasR"></div>
+          </div>
+          <div class="maleta-col">
+            <div class="citas-paso">2 · ¿Qué día la regresas?</div>
+            <div class="citas-dias" id="cmDiasD"></div>
+            <div class="citas-paso">Hora de regreso</div>
+            <div class="citas-slots" id="cmHorasD"></div>
+          </div>
+        </div>
+        <div class="citas-paso">3 · Tus datos</div>
+        <input id="cmNombre" class="citas-inp" placeholder="Tu nombre">
+        <input id="cmTel" class="citas-inp" placeholder="Tu teléfono" inputmode="tel">
+        <button id="cmGo" class="citas-btn">Apartar maleta</button>
+        <div class="citas-msg" id="cmMsg"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ================= NUESTRA TIENDA ================= -->
@@ -276,6 +354,7 @@
   })();
   </script>
   <script type="module" src="js/home-secciones.js?v=20"></script>
+  <script type="module" src="js/citas-home.js?v=20"></script>
   <script type="module" src="js/auth.js?v=20"></script>
 </body>
 </html>
