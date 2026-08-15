@@ -1,6 +1,6 @@
 import { db } from "./db.js";
 
-const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const OWNER_EMAILS = ["admincasanorco@gmail.com"];
 const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
 let currentUser = null;
 
@@ -161,7 +161,6 @@ function openModal(mode) {
       <div class="authErr" id="authErr"></div>
       <div class="authMsg" id="authMsg"></div>
       <button class="authGo" id="authGo">Entrar</button>
-      <div class="authFoot"><button class="authLink" id="authForgot">¿Olvidaste tu contraseña?</button></div>
     </div>`;
   document.body.appendChild(ov);
   const q = s => ov.querySelector(s);
@@ -175,21 +174,12 @@ function openModal(mode) {
     ov.querySelectorAll(".authTab").forEach(t => t.classList.toggle("on", t.dataset.m === m));
     q("#authErr").textContent = ""; q("#authMsg").textContent = "";
     q("#authPass").style.display = "";
-    q("#authForgot").style.display = m === "login" ? "" : "none";
     q("#authPass").setAttribute("autocomplete", m === "login" ? "current-password" : "new-password");
     if (m === "login") { q("#authSub").textContent = "Entra para guardar tu dirección y comprar más rápido."; q("#authGo").textContent = "Entrar"; }
     else { q("#authSub").textContent = "Crea tu cuenta con correo y contraseña."; q("#authGo").textContent = "Crear cuenta"; }
   };
   ov.querySelectorAll(".authTab").forEach(t => t.onclick = () => setMode(t.dataset.m));
   setMode(mode);
-
-  q("#authForgot").onclick = async () => {
-    const email = q("#authEmail").value.trim();
-    q("#authErr").textContent = ""; q("#authMsg").textContent = "";
-    if (!email) { q("#authErr").textContent = "Escribe tu correo arriba y vuelve a tocar aquí."; return; }
-    try { await db.resetPass(email); q("#authMsg").textContent = "Te enviamos un correo para restablecer tu contraseña."; }
-    catch (err) { q("#authErr").textContent = traducirError(err); }
-  };
 
   q("#authGo").onclick = async () => {
     const email = q("#authEmail").value.trim(), pass = q("#authPass").value;
