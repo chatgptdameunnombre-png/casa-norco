@@ -1,5 +1,5 @@
-import { firebaseConfig, usaFirebase } from "./config.js?v=20";
-import { PRODUCTOS_SEED } from "./seed.js?v=20";
+import { firebaseConfig, usaFirebase } from "./config.js?v=21";
+import { PRODUCTOS_SEED } from "./seed.js?v=21";
 
 const LS_KEY = "bici_productos";
 const LS_AUTH = "bici_auth";
