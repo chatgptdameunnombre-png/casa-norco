@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apartar cita — Casa Norco</title>
+  <link rel="icon" href="fotos/logo/iso-negro.png">
+  <link rel="stylesheet" href="css/styles.css?v=14">
+  <style>
+    .cita-wrap { max-width: 720px; margin: 0 auto; }
+    .cita-tabs { display:flex; gap:8px; background:#0e0e11; border:1px solid #26262c; border-radius:12px; padding:4px; margin:18px 0 22px; }
+    .cita-tab { flex:1; padding:12px; border:none; border-radius:9px; background:none; color:#9a9aa2; font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+    .cita-tab.on { background:#c6f032; color:#0a0a0a; }
+    .cita-card { background:#141416; border:1px solid #26262c; border-radius:18px; padding:22px; }
+    .cita-card h3 { margin:0 0 4px; font-size:18px; }
+    .cita-card p.sub { margin:0 0 16px; font-size:13px; color:#9a9aa2; }
+    .cInp { width:100%; padding:12px 14px; border-radius:11px; border:1px solid #2a2a30; background:#0e0e11; color:#f4f4f5; font-size:14px; outline:none; box-sizing:border-box; margin-bottom:12px; }
+    .cInp:focus { border-color:var(--accent,#c6f032); }
+    .cLbl { display:block; font-size:12.5px; color:#c9c9cf; font-weight:600; margin:2px 0 6px; }
+    .slots { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .slot { padding:10px 14px; border-radius:11px; border:1px solid #2a2a30; background:#17171b; color:#f4f4f5; font-size:13px; cursor:pointer; font-weight:700; }
+    .slot.on { border-color:#c6f032; background:rgba(198,240,50,.12); color:#c6f032; }
+    .cGo { width:100%; background:#25D366; color:#fff; border:none; border-radius:12px; padding:15px; font-weight:800; font-size:15px; cursor:pointer; margin-top:4px; }
+    .cGo:disabled { opacity:.5; cursor:default; }
+    .cMsg { min-height:18px; font-size:12.5px; color:#ff6b6b; margin:6px 0; }
+    .cerrado { color:#ff6b6b; font-size:13px; margin-bottom:12px; }
+    .row-2c { display:flex; gap:10px; }
+    .row-2c > div { flex:1; }
+  </style>
+</head>
+<body>
+  <header class="hdr">
+    <div class="wrap hdr__in">
+      <a href="index.html" class="brand" aria-label="Casa Norco">
+        <img class="brand__iso" src="fotos/logo/iso-blanco.png" alt="">
+        <span class="brand__word">
+          <span class="brand__name">CASA NORCO</span>
+          <span class="brand__sub">Cueva Bicycles · Speedhouse</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="seminuevos.html">Usados</a>
+        <a href="citas.html">Citas</a>
+        <a href="index.html#visitanos">Visítanos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap sec sec--top">
+    <div class="cita-wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Reserva en línea</span>
+        <h2>Apartar cita</h2>
+        <p>Elige el día y la hora. Confirmamos por WhatsApp.</p>
+        <span class="rule"></span>
+      </div>
+
+      <div class="cita-tabs">
+        <button class="cita-tab on" data-t="taller">🔧 Taller</button>
+        <button class="cita-tab" data-t="maleta">🧳 Maleta</button>
+      </div>
+
+      <!-- TALLER -->
+      <div class="cita-card" id="cardTaller">
+        <h3>Cita en el taller</h3>
+        <p class="sub">Servicio y mantenimiento de tu bici. Bloques de 2 horas.</p>
+        <label class="cLbl">Día</label>
+        <input type="date" id="tDia" class="cInp">
+        <div id="tCerrado" class="cerrado" hidden>Ese día estamos cerrados. Elige otro.</div>
+        <label class="cLbl" id="tHoraLbl" hidden>Horario</label>
+        <div class="slots" id="tSlots"></div>
+        <div class="row-2c">
+          <div><label class="cLbl">Nombre</label><input id="tNombre" class="cInp" placeholder="Tu nombre"></div>
+          <div><label class="cLbl">Teléfono</label><input id="tTel" class="cInp" inputmode="tel" placeholder="Tu teléfono"></div>
+        </div>
+        <label class="cLbl">¿Qué necesitas? (opcional)</label>
+        <input id="tServicio" class="cInp" placeholder="Ej: afinación, cambio de balatas, ponchadura…">
+        <div class="cMsg" id="tMsg"></div>
+        <button class="cGo" id="tGo">Apartar por WhatsApp</button>
+      </div>
+
+      <!-- MALETA -->
+      <div class="cita-card" id="cardMaleta" hidden>
+        <h3>Rentar maleta</h3>
+        <p class="sub">Aparta tu maleta: elige cuándo la recoges y cuándo la regresas.</p>
+        <div class="row-2c">
+          <div><label class="cLbl">Recoger — día</label><input type="date" id="mDiaR" class="cInp"></div>
+          <div><label class="cLbl">Hora de recoger</label><input type="time" id="mHoraR" class="cInp"></div>
+        </div>
+        <div class="row-2c">
+          <div><label class="cLbl">Regresar — día</label><input type="date" id="mDiaD" class="cInp"></div>
+          <div><label class="cLbl">Hora de regreso</label><input type="time" id="mHoraD" class="cInp"></div>
+        </div>
+        <div class="row-2c">
+          <div><label class="cLbl">Nombre</label><input id="mNombre" class="cInp" placeholder="Tu nombre"></div>
+          <div><label class="cLbl">Teléfono</label><input id="mTel" class="cInp" inputmode="tel" placeholder="Tu teléfono"></div>
+        </div>
+        <div class="cMsg" id="mMsg"></div>
+        <button class="cGo" id="mGo">Apartar por WhatsApp</button>
+      </div>
+
+      <p style="text-align:center;color:#6b6b73;font-size:12px;margin-top:16px">Horario del taller: Lun–Jue 9–19 · Vie 9–19 · Sáb 9–14 · Dom cerrado</p>
+    </div>
+  </main>
+
+  <div class="toast-wrap" id="toasts"></div>
+  <script type="module" src="js/auth.js?v=3"></script>
+  <script type="module" src="js/citas.js?v=1"></script>
+</body>
+</html>
