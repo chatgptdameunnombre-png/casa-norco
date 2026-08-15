@@ -1,5 +1,6 @@
-import { COBRO_WEBHOOK, ENVIO_DOMICILIO, WHATSAPP_NUMERO } from "./config.js?v=20";
-import { db } from "./db.js?v=20";
+import { COBRO_WEBHOOK, ENVIO_DOMICILIO, WHATSAPP_NUMERO } from "./config.js?v=21";
+import { db } from "./db.js?v=21";
+import { soyMayorista } from "./mayoreo.js?v=21";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 
@@ -7,12 +8,10 @@ const CLABE_TRANSFERENCIA = "646180157099887766";
 const BANCO_TRANSFERENCIA = "STP";
 const BENEFICIARIO_TRANSFERENCIA = "Casa Norco (Cueva Bicycles)";
 
-let user = null, perfil = null, esMayorista = false;
+let user = null, perfil = null;
 db.onAuth(async u => {
   user = u;
   perfil = u ? await db.getPerfil(u.uid).catch(() => null) : null;
-  if (u) { const m = await db.getMiMayoreo(u.uid).catch(() => null); esMayorista = m?.estado === "aprobado"; }
-  else esMayorista = false;
 });
 
 export function iniciarPago({ items, productos, entrega, onError }) {
@@ -26,7 +25,7 @@ export function iniciarPago({ items, productos, entrega, onError }) {
 function enviarPago(payload, onError) {
   fetch(COBRO_WEBHOOK, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({ ...payload, uid: user?.uid || "" })
   }).then(r => r.json()).then(d => {
     if (d.link) { window.location.href = d.link; return; }
     throw new Error("sin link");
@@ -44,7 +43,7 @@ export function iniciarTransferencia({ productos, entrega, total, onError }) {
 function mostrarClabe({ productos, entrega, total, cliente, telefono, direccion }) {
   if (document.getElementById("trOverlay")) return;
   const ref = "CN-" + Date.now().toString().slice(-6);
-  const desc = esMayorista ? Math.round(total * 0.1) : 0;
+  const desc = soyMayorista() ? Math.round(total * 0.1) : 0;
   const totalFinal = total - desc;
   const resumen = (productos || []).map(p => `${p.qty}x ${p.title}${p.talla ? " (T " + p.talla + ")" : ""}`).join(", ");
   const entregaTxt = entrega === "domicilio" ? `Entrega a domicilio: ${direccion || ""}` : "Recoge en tienda";
