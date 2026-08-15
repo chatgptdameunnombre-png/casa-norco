@@ -1,7 +1,7 @@
 /* Noticias / Anuncios con CARRUSEL de imágenes (flechitas ‹ ›).
    1) Posts de Instagram: arreglo ANUNCIOS (imgs = varias fotos locales + link al post).
    2) Preventas: se traen solas de Firebase (productos con preventa=true) con TODAS sus fotos. */
-import { firebaseConfig } from "./config.js";
+import { firebaseConfig } from "./config.js?v=20";
 
 const ANUNCIOS = [
   {
