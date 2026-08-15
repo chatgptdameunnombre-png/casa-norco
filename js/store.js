@@ -1,6 +1,7 @@
-import { db, MODO } from "./db.js?v=20";
-import { setProductos, initCart, enCarrito } from "./cart.js?v=20";
-import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=20";
+import { db, MODO } from "./db.js?v=21";
+import { setProductos, initCart, enCarrito } from "./cart.js?v=21";
+import { tieneTallas, stockTotal, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=21";
+import { onMayoreo, precioHTML } from "./mayoreo.js?v=21";
 
 const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
@@ -22,13 +23,14 @@ document.body.appendChild(badge);
 /* ---------- productos ---------- */
 if (MODO === "demo") await db.seedIfEmpty();
 db.onProducts(list => { productos = list; setProductos(list); render(); });
+onMayoreo(() => render());
 
 function cardHTML(p) {
   const total = stockTotal(p);
   const st = etiquetaStock(total);
   const sinStock = total <= 0;
   const sized = tieneTallas(p);
-  const precioTxt = preciosVarian(p) ? `desde ${money(precioDesde(p))}` : money(precioDesde(p));
+  const precioTxt = (preciosVarian(p) ? "desde " : "") + precioHTML(precioDesde(p));
   const boton = sinStock
     ? `<button class="add-btn" disabled>Agotado</button>`
     : sized
