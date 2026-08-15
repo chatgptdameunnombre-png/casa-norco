@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi cuenta — Casa Norco</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="fotos/logo/iso-negro.png">
+  <link rel="stylesheet" href="css/styles.css?v=14">
+</head>
+<body>
+  <header class="hdr">
+    <div class="wrap hdr__in">
+      <a href="index.html" class="brand" aria-label="Casa Norco">
+        <img class="brand__iso" src="fotos/logo/iso-blanco.png" alt="">
+        <span class="brand__word">
+          <span class="brand__name">CASA NORCO</span>
+          <span class="brand__sub">Cueva Bicycles · Speedhouse</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a href="bicicletas.html">Bicicletas</a>
+        <a href="accesorios.html">Accesorios</a>
+        <a href="seminuevos.html">Seminuevos</a>
+        <a href="index.html#noticias">Noticias</a>
+        <a href="index.html#visitanos">Visítanos</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap sec" style="max-width:640px">
+    <div class="sec-head">
+      <span class="eyebrow">Tu cuenta</span>
+      <h2>Mi cuenta</h2>
+      <span class="rule"></span>
+    </div>
+
+    <div id="cuentaOut" style="display:none;text-align:center;padding:30px 0">
+      <p style="color:#9a9aa2;font-size:15px;margin-bottom:18px">Inicia sesión para ver tus datos y guardar tu dirección de entrega.</p>
+      <button id="cuentaEntrar" class="btn-cta" type="button">Entrar / Crear cuenta</button>
+    </div>
+
+    <div id="cuentaIn" style="display:none">
+      <p style="color:#9a9aa2;font-size:14px;margin-bottom:18px">Sesión iniciada como <b id="cuentaEmail" style="color:#f4f4f5"></b></p>
+
+      <h3 style="font-size:16px;margin:0 0 12px">Datos de entrega</h3>
+      <p style="color:#9a9aa2;font-size:13px;margin:0 0 14px">Guárdalos una vez y en tus próximas compras solo los confirmas.</p>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="fNombre" class="cInp" placeholder="Nombre completo">
+        <input id="fTel" class="cInp" placeholder="Teléfono" inputmode="tel">
+        <input id="fCalle" class="cInp" placeholder="Calle y número">
+        <div style="display:flex;gap:10px">
+          <input id="fCol" class="cInp" placeholder="Colonia" style="flex:2">
+          <input id="fCP" class="cInp" placeholder="C.P." inputmode="numeric" style="flex:1">
+        </div>
+        <div style="display:flex;gap:10px">
+          <input id="fCiudad" class="cInp" placeholder="Ciudad" style="flex:1">
+          <input id="fEstado" class="cInp" placeholder="Estado" style="flex:1">
+        </div>
+        <input id="fRef" class="cInp" placeholder="Referencias (opcional)">
+        <div id="cuentaMsg" style="min-height:18px;font-size:13px"></div>
+        <button id="cuentaGuardar" class="btn-cta" type="button">Guardar mis datos</button>
+      </div>
+
+      <div style="border-top:1px solid #26262c;margin:26px 0 0;padding-top:18px">
+        <h3 style="font-size:16px;margin:0 0 8px">Mis pedidos</h3>
+        <p style="color:#9a9aa2;font-size:13px;margin:0">Aquí verás el historial de tus compras. <span style="color:#6b6b73">(Próximamente)</span></p>
+      </div>
+
+      <div style="margin-top:26px">
+        <button id="cuentaSalir" class="btn-ghost" type="button">Cerrar sesión</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <style>
+    .cInp{width:100%;padding:12px 14px;border-radius:11px;border:1px solid #2a2a30;background:#0e0e11;color:#f4f4f5;font-size:14px;outline:none;box-sizing:border-box}
+    .cInp:focus{border-color:var(--accent,#c6f032)}
+  </style>
+
+  <script type="module" src="js/auth.js?v=1"></script>
+  <script type="module" src="js/cuenta.js?v=1"></script>
+</body>
+</html>
