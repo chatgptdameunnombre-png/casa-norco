@@ -1,17 +1,21 @@
-import { WHATSAPP_NUMERO } from "./config.js";
+import { WHATSAPP_NUMERO, CITAS_TALLER_HORARIOS, CITAS_TALLER_AGENDAR, CITAS_MALETA_AGENDAR } from "./config.js";
 
 const $ = s => document.querySelector(s);
 
-// Horarios del taller por día (getDay: 0=Dom … 6=Sáb)
+// Horarios del taller por día (respaldo local si el webhook falla)
 const HORARIOS = { 0: null, 1: [9, 19], 2: [9, 19], 3: [9, 19], 4: [9, 19], 5: [9, 19], 6: [9, 14] };
 
-const dosDigitos = n => String(n).padStart(2, "0");
-const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDigitos(d.getMonth() + 1)}-${dosDigitos(d.getDate())}`; };
-const fmtHora = h => `${h}:00`;
-const fmtFecha = s => { const d = new Date(s + "T00:00:00"); return d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" }); };
+const dosDig = n => String(n).padStart(2, "0");
+const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`; };
+const fmtFecha = s => new Date(s + "T00:00:00").toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" });
 const waLink = msg => `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`;
 
 let tallaSlot = null;
+
+async function postJSON(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return r.json();
+}
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".cita-tab").forEach(b => b.addEventListener("click", () => {
@@ -20,32 +24,43 @@ document.querySelectorAll(".cita-tab").forEach(b => b.addEventListener("click", 
   $("#cardMaleta").hidden = b.dataset.t !== "maleta";
 }));
 
-/* ---------- taller ---------- */
 $("#tDia").min = hoyStr();
 $("#mDiaR").min = hoyStr();
 $("#mDiaD").min = hoyStr();
 
-function slotsDelDia(fechaStr) {
+function slotsLocal(fechaStr) {
   const d = new Date(fechaStr + "T00:00:00");
   const rango = HORARIOS[d.getDay()];
   if (!rango) return null;
   const [ini, fin] = rango;
-  const slots = [];
-  for (let h = ini; h + 2 <= fin; h += 2) slots.push([h, h + 2]);
-  return slots;
+  const out = [];
+  for (let h = ini; h + 2 <= fin; h += 2) out.push(dosDig(h) + ":00");
+  return out;
 }
 
-$("#tDia").addEventListener("change", () => {
-  tallaSlot = null;
+function pintarSlots(lista) {
   const cont = $("#tSlots");
+  tallaSlot = null;
+  if (!lista || !lista.length) { cont.innerHTML = `<p style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Elige otro.</p>`; return; }
+  cont.innerHTML = lista.map(h => `<button type="button" class="slot" data-slot="${h}">${h} – ${dosDig(Number(h.slice(0, 2)) + 2)}:00</button>`).join("");
+}
+
+$("#tDia").addEventListener("change", async () => {
   const fecha = $("#tDia").value;
-  $("#tMsg").textContent = "";
-  if (!fecha) { cont.innerHTML = ""; $("#tCerrado").hidden = true; $("#tHoraLbl").hidden = true; return; }
-  const slots = slotsDelDia(fecha);
-  if (!slots) { cont.innerHTML = ""; $("#tCerrado").hidden = false; $("#tHoraLbl").hidden = true; return; }
-  $("#tCerrado").hidden = true;
+  const cont = $("#tSlots");
+  tallaSlot = null; $("#tMsg").textContent = "";
+  $("#tCerrado").hidden = true; $("#tHoraLbl").hidden = true;
+  if (!fecha) { cont.innerHTML = ""; return; }
+  if (!slotsLocal(fecha)) { $("#tCerrado").hidden = false; cont.innerHTML = ""; return; }
   $("#tHoraLbl").hidden = false;
-  cont.innerHTML = slots.map(s => `<button type="button" class="slot" data-slot="${s[0]}-${s[1]}">${fmtHora(s[0])} – ${fmtHora(s[1])}</button>`).join("");
+  cont.innerHTML = `<p style="color:#9a9aa2;font-size:13px">Buscando horarios libres…</p>`;
+  try {
+    const r = await postJSON(CITAS_TALLER_HORARIOS, { fecha });
+    if (r && r.cerrado) { $("#tCerrado").hidden = false; $("#tHoraLbl").hidden = true; cont.innerHTML = ""; return; }
+    pintarSlots(r && Array.isArray(r.horarios) ? r.horarios : slotsLocal(fecha));
+  } catch {
+    pintarSlots(slotsLocal(fecha)); // respaldo local si el webhook falla
+  }
 });
 
 $("#tSlots").addEventListener("click", e => {
@@ -55,29 +70,55 @@ $("#tSlots").addEventListener("click", e => {
   document.querySelectorAll("#tSlots .slot").forEach(s => s.classList.toggle("on", s === b));
 });
 
-$("#tGo").addEventListener("click", () => {
+$("#tGo").addEventListener("click", async () => {
   const fecha = $("#tDia").value, nombre = $("#tNombre").value.trim(), tel = $("#tTel").value.trim();
   const servicio = $("#tServicio").value.trim();
-  $("#tMsg").textContent = "";
-  if (!fecha) { $("#tMsg").textContent = "Elige el día."; return; }
-  if (!slotsDelDia(fecha)) { $("#tMsg").textContent = "Ese día estamos cerrados."; return; }
-  if (!tallaSlot) { $("#tMsg").textContent = "Elige un horario."; return; }
-  if (!nombre || !tel) { $("#tMsg").textContent = "Completa nombre y teléfono."; return; }
-  const [h1, h2] = tallaSlot.split("-");
-  const msg = `Hola, quiero apartar una CITA EN EL TALLER.\nDía: ${fmtFecha(fecha)}\nHora: ${fmtHora(h1)} a ${fmtHora(h2)}\nNombre: ${nombre}\nTeléfono: ${tel}${servicio ? "\nServicio: " + servicio : ""}`;
-  window.open(waLink(msg), "_blank", "noopener");
+  const msg = $("#tMsg"); msg.style.color = "#ff6b6b"; msg.textContent = "";
+  if (!fecha || !slotsLocal(fecha)) { msg.textContent = "Elige un día válido."; return; }
+  if (!tallaSlot) { msg.textContent = "Elige un horario."; return; }
+  if (!nombre || !tel) { msg.textContent = "Completa nombre y teléfono."; return; }
+  const btn = $("#tGo"); btn.disabled = true; const o = btn.textContent; btn.textContent = "Agendando…";
+  try {
+    const r = await postJSON(CITAS_TALLER_AGENDAR, { fecha, hora: tallaSlot, nombre, telefono: tel, servicio });
+    if (r && r.ok) {
+      msg.style.color = "#c6f032";
+      msg.innerHTML = `✓ ${r.mensaje || "Cita agendada."} Te confirmamos por WhatsApp.`;
+      const wa = `Hola, agendé una cita en el taller el ${fmtFecha(fecha)} a las ${tallaSlot} a nombre de ${nombre}.`;
+      window.open(waLink(wa), "_blank", "noopener");
+      $("#tDia").dispatchEvent(new Event("change")); // refrescar slots libres
+    } else { throw new Error("no ok"); }
+  } catch {
+    // respaldo: WhatsApp
+    const wa = `Hola, quiero apartar cita en el taller.\nDía: ${fmtFecha(fecha)}\nHora: ${tallaSlot}\nNombre: ${nombre}\nTel: ${tel}${servicio ? "\nServicio: " + servicio : ""}`;
+    window.open(waLink(wa), "_blank", "noopener");
+    msg.style.color = "#9a9aa2"; msg.textContent = "Te mandamos a WhatsApp para confirmar.";
+  }
+  btn.disabled = false; btn.textContent = o;
 });
 
 /* ---------- maleta ---------- */
-$("#mGo").addEventListener("click", () => {
+$("#mGo").addEventListener("click", async () => {
   const dr = $("#mDiaR").value, hr = $("#mHoraR").value, dd = $("#mDiaD").value, hd = $("#mHoraD").value;
   const nombre = $("#mNombre").value.trim(), tel = $("#mTel").value.trim();
-  $("#mMsg").textContent = "";
-  if (!dr || !hr || !dd || !hd) { $("#mMsg").textContent = "Completa las fechas y horas de recoger y regresar."; return; }
-  if (!nombre || !tel) { $("#mMsg").textContent = "Completa nombre y teléfono."; return; }
-  const iniD = new Date(`${dr}T${hr}`), finD = new Date(`${dd}T${hd}`);
-  if (finD <= iniD) { $("#mMsg").textContent = "La fecha de regreso debe ser después de la de recoger."; return; }
-  const dias = Math.max(1, Math.ceil((finD - iniD) / 86400000));
-  const msg = `Hola, quiero APARTAR UNA MALETA.\nRecojo: ${fmtFecha(dr)} a las ${hr}\nRegreso: ${fmtFecha(dd)} a las ${hd}\nDías: ${dias}\nNombre: ${nombre}\nTeléfono: ${tel}`;
-  window.open(waLink(msg), "_blank", "noopener");
+  const msg = $("#mMsg"); msg.style.color = "#ff6b6b"; msg.textContent = "";
+  if (!dr || !hr || !dd || !hd) { msg.textContent = "Completa fechas y horas."; return; }
+  if (!nombre || !tel) { msg.textContent = "Completa nombre y teléfono."; return; }
+  if (new Date(`${dd}T${hd}`) <= new Date(`${dr}T${hr}`)) { msg.textContent = "El regreso debe ser después de recoger."; return; }
+  const btn = $("#mGo"); btn.disabled = true; const o = btn.textContent; btn.textContent = "Apartando…";
+  try {
+    const r = await postJSON(CITAS_MALETA_AGENDAR, { fechaR: dr, horaR: hr, fechaD: dd, horaD: hd, nombre, telefono: tel });
+    if (r && r.ok) {
+      msg.style.color = "#c6f032";
+      msg.innerHTML = `✓ ${r.mensaje || "Maleta apartada."} Te confirmamos por WhatsApp.`;
+      window.open(waLink(`Hola, aparté una maleta: recojo ${fmtFecha(dr)} ${hr}, regreso ${fmtFecha(dd)} ${hd}. Nombre: ${nombre}.`), "_blank", "noopener");
+    } else {
+      msg.style.color = "#ff6b6b";
+      msg.textContent = (r && r.mensaje) || "Esas fechas ya están apartadas. Elige otras.";
+    }
+  } catch {
+    const wa = `Hola, quiero apartar una maleta.\nRecojo: ${fmtFecha(dr)} ${hr}\nRegreso: ${fmtFecha(dd)} ${hd}\nNombre: ${nombre}\nTel: ${tel}`;
+    window.open(waLink(wa), "_blank", "noopener");
+    msg.style.color = "#9a9aa2"; msg.textContent = "Te mandamos a WhatsApp para confirmar.";
+  }
+  btn.disabled = false; btn.textContent = o;
 });
