@@ -30,7 +30,42 @@ async function loadPerfil(uid) {
 db.onAuth(u => {
   user = u;
   render();
-  if (u) loadPerfil(u.uid);
+  if (u) { loadPerfil(u.uid); loadMayoreo(u.uid); }
+});
+
+async function loadMayoreo(uid) {
+  const txt = $("#mayoreoTxt"), btn = $("#mayoreoBtn");
+  if (!txt || !btn) return;
+  let m = null;
+  try { m = await db.getMiMayoreo(uid); } catch (_) {}
+  const estado = m?.estado;
+  if (estado === "aprobado") {
+    txt.innerHTML = "✓ <b style='color:#c6f032'>Eres mayorista.</b> Tienes <b>−10%</b> en tus compras pagando por transferencia.";
+    btn.style.display = "none";
+  } else if (estado === "pendiente") {
+    txt.textContent = "Tu solicitud de mayoreo está en revisión. Te avisaremos.";
+    btn.style.display = "none";
+  } else if (estado === "rechazado") {
+    txt.textContent = "Tu solicitud anterior no fue aprobada. Si crees que es un error, contáctanos.";
+    btn.style.display = "none";
+  } else {
+    txt.textContent = "¿Compras al por mayor? Solicita tu cuenta de mayorista y recibe −10% pagando por transferencia.";
+    btn.style.display = "";
+    btn.disabled = false; btn.textContent = "Solicitar ser mayorista";
+  }
+}
+
+$("#mayoreoBtn")?.addEventListener("click", async () => {
+  if (!user) return;
+  const btn = $("#mayoreoBtn"); btn.disabled = true; btn.textContent = "Enviando…";
+  try {
+    const p = await db.getPerfil(user.uid).catch(() => null);
+    await db.solicitarMayoreo(user.uid, { email: user.email, nombre: p?.nombre || "" });
+    await loadMayoreo(user.uid);
+  } catch (err) {
+    btn.disabled = false; btn.textContent = "Solicitar ser mayorista";
+    $("#mayoreoTxt").textContent = "No se pudo enviar la solicitud. Intenta más tarde.";
+  }
 });
 
 $("#cuentaEntrar")?.addEventListener("click", () => document.getElementById("authBtn")?.click());
