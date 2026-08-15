@@ -11,6 +11,7 @@ const to12 = hhmm => { let [h, m] = hhmm.split(":").map(Number); const ap = h < 
 const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig(d.getMonth() + 1)}-${dosDig(d.getDate())}`; };
 const abierto = f => !!HORARIOS[new Date(f + "T00:00:00").getDay()];
 const horaValida = hhmm => { const h = Number(hhmm.split(":")[0]); return h >= 9 && h <= 18; };
+const anioOk = f => f.slice(0, 4) === "2026"; // solo se agenda en 2026
 
 async function postJSON(url, body) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -45,7 +46,7 @@ let tDia = null, tHora = null;
 if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(6).map(chipDia).join("");
 
 async function seleccionarDiaTaller(fecha, desdeChip) {
-  if (fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Por ahora solo agendamos hasta diciembre."; return; }
+  if (!anioOk(fecha) || fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Solo agendamos en 2026 (hasta diciembre)."; if ($("#ctOtroDia")) $("#ctOtroDia").value = ""; return; }
   tDia = fecha; tHora = null;
   document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === desdeChip));
   if (!desdeChip && $("#ctOtroDia").value !== fecha) $("#ctOtroDia").value = fecha;
@@ -113,7 +114,7 @@ function bindDias(cont, inp, set) {
   });
   $(inp)?.addEventListener("change", e => {
     if (!e.target.value) return;
-    if (e.target.value > MAX) { alert("Solo apartamos hasta diciembre."); e.target.value = ""; return; }
+    if (!anioOk(e.target.value) || e.target.value > MAX) { alert("Solo apartamos en 2026 (hasta diciembre)."); e.target.value = ""; return; }
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
     set(e.target.value);
   });
