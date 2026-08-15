@@ -39,6 +39,8 @@ async function crearImplFirebase() {
   const refProd = id => doc(fdb, "productos", id);
   const refFotos = id => doc(fdb, "productos_fotos", id);
   const refCliente = uid => doc(fdb, "clientes", uid);
+  const refSolic = uid => doc(fdb, "solicitudes_mayoreo", uid);
+  const colSolic = collection(fdb, "solicitudes_mayoreo");
 
   async function escribirFotos(id, extra) {
     if (extra.length) await setDoc(refFotos(id), { imagenes: extra });
@@ -86,6 +88,10 @@ async function crearImplFirebase() {
     onAuth(cb) { return onAuthStateChanged(auth, u => cb(u ? { email: u.email, uid: u.uid } : null)); },
     async guardarPerfil(uid, data) { await setDoc(refCliente(uid), data, { merge: true }); },
     async getPerfil(uid) { const s = await getDoc(refCliente(uid)); return s.exists() ? s.data() : null; },
+    async solicitarMayoreo(uid, data) { await setDoc(refSolic(uid), { ...data, estado: "pendiente", creado: new Date().toISOString() }, { merge: true }); },
+    async getMiMayoreo(uid) { try { const s = await getDoc(refSolic(uid)); return s.exists() ? s.data() : null; } catch { return null; } },
+    async listarMayoreo() { const snap = await getDocs(colSolic); return snap.docs.map(d => ({ uid: d.id, ...d.data() })); },
+    async resolverMayoreo(uid, aprobado) { await updateDoc(refSolic(uid), { estado: aprobado ? "aprobado" : "rechazado", resuelto: new Date().toISOString() }); },
     async seedIfEmpty() {
       const snap = await getDocs(col);
       if (snap.empty) {
@@ -201,6 +207,10 @@ function crearImplDemo() {
     async resetPass() { return true; },
     async guardarPerfil(uid, data) { localStorage.setItem("bici_perfil_" + uid, JSON.stringify(data)); },
     async getPerfil(uid) { try { return JSON.parse(localStorage.getItem("bici_perfil_" + uid)); } catch { return null; } },
+    async solicitarMayoreo(uid, data) { localStorage.setItem("bici_mayoreo_" + uid, JSON.stringify({ ...data, estado: "pendiente" })); },
+    async getMiMayoreo(uid) { try { return JSON.parse(localStorage.getItem("bici_mayoreo_" + uid)); } catch { return null; } },
+    async listarMayoreo() { return []; },
+    async resolverMayoreo() {},
     async logout() { localStorage.removeItem(LS_AUTH); notificarAuth(); },
     onAuth(cb) { authListeners.add(cb); cb(usuarioActual()); return () => authListeners.delete(cb); },
     async seedIfEmpty() {
