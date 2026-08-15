@@ -415,6 +415,8 @@ main.sec--top { max-width: none; padding-left: 34px; padding-right: 34px; }
 .line__info { flex: 1; min-width: 0; }
 .line__name { font-weight: 600; font-size: 14px; color: var(--ink); }
 .line__price { color: var(--muted); font-size: 13px; }
+.price .precio-may, .prod__price .precio-may, .line__price .precio-may { font-size: inherit; font-weight: inherit; color: #c6f032; }
+.price .precio-antes, .prod__price .precio-antes, .line__price .precio-antes { font-size: inherit; }
 .qty { display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; background: rgba(255,255,255,.05); border-radius: 999px; padding: 4px 6px; }
 .qty button { width: 26px; height: 26px; border-radius: 999px; background: var(--bg-card); color: var(--ink); font-weight: 700; display: grid; place-items: center; border: 1px solid var(--line); }
 .qty button:disabled { opacity: .35; cursor: not-allowed; }
