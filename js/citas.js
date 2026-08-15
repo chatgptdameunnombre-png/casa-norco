@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMERO, CITAS_TALLER_HORARIOS, CITAS_TALLER_AGENDAR, CITAS_MALETA_AGENDAR } from "./config.js";
+import { WHATSAPP_NUMERO, CITAS_TALLER_HORARIOS, CITAS_TALLER_AGENDAR, CITAS_MALETA_AGENDAR } from "./config.js?v=20";
 
 const $ = s => document.querySelector(s);
 
