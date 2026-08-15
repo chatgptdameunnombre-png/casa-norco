@@ -1,5 +1,8 @@
 import { db } from "./db.js";
 
+const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
+
 const $ = s => document.querySelector(s);
 let user = null;
 
@@ -10,6 +13,8 @@ function render() {
   $("#cuentaOut").style.display = user ? "none" : "";
   $("#cuentaIn").style.display = user ? "" : "none";
   if (user) $("#cuentaEmail").textContent = user.email;
+  const panelBtn = $("#cuentaPanel");
+  if (panelBtn) panelBtn.style.display = esDueno(user) ? "" : "none";
 }
 
 async function loadPerfil(uid) {
