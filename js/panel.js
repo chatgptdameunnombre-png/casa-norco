@@ -32,7 +32,37 @@ async function arrancarDash() {
   inicializado = true;
   await db.seedIfEmpty();
   db.onProducts(list => { productos = list; render(); });
+  cargarMayoreo();
 }
+
+async function cargarMayoreo() {
+  const cont = $("#mayoreoList");
+  if (!cont) return;
+  let list = [];
+  try { list = await db.listarMayoreo(); } catch (_) {}
+  if (!list.length) { cont.innerHTML = `<p style="color:var(--muted);font-size:14px">Sin solicitudes todavía.</p>`; return; }
+  const orden = { pendiente: 0, aprobado: 1, rechazado: 2 };
+  list.sort((a, b) => (orden[a.estado] ?? 3) - (orden[b.estado] ?? 3));
+  const color = e => e === "aprobado" ? "#2e7d32" : (e === "rechazado" ? "#c62828" : "#b26a00");
+  cont.innerHTML = list.map(s => `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fff;border:1px solid #eee;border-radius:12px;padding:12px 14px;flex-wrap:wrap">
+      <div><b>${s.email || s.uid}</b> <span style="color:${color(s.estado)};font-weight:700">· ${s.estado}</span></div>
+      <div style="display:flex;gap:8px">
+        ${s.estado !== "aprobado" ? `<button class="btn" data-aprobar="${s.uid}" style="width:auto;padding:7px 14px">Aprobar</button>` : ""}
+        ${s.estado !== "rechazado" ? `<button class="btn btn--ghost" data-rechazar="${s.uid}" style="width:auto;padding:7px 14px">Rechazar</button>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+document.addEventListener("click", async e => {
+  const ap = e.target.closest("[data-aprobar]");
+  const re = e.target.closest("[data-rechazar]");
+  if (!ap && !re) return;
+  const uid = (ap || re).dataset.aprobar || (ap || re).dataset.rechazar;
+  const btn = ap || re; btn.disabled = true; const o = btn.textContent; btn.textContent = "…";
+  try { await db.resolverMayoreo(uid, !!ap); await cargarMayoreo(); toast(ap ? "Mayorista aprobado" : "Solicitud rechazada"); }
+  catch (err) { btn.disabled = false; btn.textContent = o; toast("Error, reintenta"); }
+});
 
 function stockPill(s) {
   if (s <= 0) return `<span class="stock-pill" style="color:var(--danger)">Agotado</span>`;
