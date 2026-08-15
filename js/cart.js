@@ -1,5 +1,5 @@
 import { ENVIO_DOMICILIO } from "./config.js";
-import { iniciarPago } from "./checkout.js";
+import { iniciarPago, iniciarTransferencia } from "./checkout.js";
 import { tieneTallas, stockDeTalla, stockTotal, precioTalla } from "./tallas.js";
 
 const CART_KEY = "bici_cart";
@@ -9,6 +9,7 @@ const money = n => "$" + Number(n).toLocaleString("es-MX");
 let cart = cargar();
 let productos = [];
 let entrega = null;
+let metodoPago = "tarjeta";
 
 const keyOf = (id, talla) => (talla ? `${id}__${talla}` : id);
 
@@ -102,6 +103,12 @@ export function renderCart() {
     b.style.background = on ? "rgba(198,240,50,.12)" : "#17171b";
     b.style.color = on ? "#c6f032" : "#f4f4f5";
   });
+  document.querySelectorAll(".pago-cart").forEach(b => {
+    const on = b.dataset.pm === metodoPago;
+    b.style.borderColor = on ? "#c6f032" : "#2a2a30";
+    b.style.background = on ? "rgba(198,240,50,.12)" : "#17171b";
+    b.style.color = on ? "#c6f032" : "#f4f4f5";
+  });
   $("#cartFoot").hidden = false;
 }
 
@@ -109,11 +116,18 @@ function checkout() {
   const items = itemsCarrito();
   if (!items.length) return;
   if (!entrega) { toast("Elige cómo lo recibes: <b>recoger</b> o <b>a domicilio</b>"); return; }
+  const productos = items.map(i => ({ id: i.id, qty: i.qty, title: i.nombre, talla: i.talla || "" }));
+  if (metodoPago === "transferencia") {
+    const subtotal = items.reduce((a, i) => a + i.qty * i.precio, 0);
+    const total = subtotal + (entrega === "domicilio" ? ENVIO_DOMICILIO : 0);
+    iniciarTransferencia({ productos, entrega, total, onError: () => toast("No se pudo, intenta de nuevo") });
+    return;
+  }
   const mpItems = items.map(i => ({ title: i.talla ? `${i.nombre} — Talla ${i.talla}` : i.nombre, quantity: i.qty, unit_price: i.precio, currency_id: "MXN" }));
   if (entrega === "domicilio") mpItems.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
   iniciarPago({
     items: mpItems,
-    productos: items.map(i => ({ id: i.id, qty: i.qty, title: i.nombre, talla: i.talla || "" })),
+    productos,
     entrega,
     onError: () => toast("No se pudo generar el pago, intenta de nuevo")
   });
@@ -135,6 +149,8 @@ export function initCart() {
   document.addEventListener("click", e => {
     const ec = e.target.closest("[data-ec]");
     if (ec) { entrega = ec.dataset.ec; renderCart(); return; }
+    const pm = e.target.closest("[data-pm]");
+    if (pm) { metodoPago = pm.dataset.pm; renderCart(); return; }
     const t = e.target.closest("[data-add],[data-inc],[data-dec],[data-rm]");
     if (!t) return;
     e.preventDefault();
@@ -160,6 +176,13 @@ export function initCart() {
     wrap.style.cssText = "display:flex;gap:8px;margin-bottom:12px";
     wrap.innerHTML = `<button type="button" class="entrega-cart" data-ec="tienda" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">Recoger en tienda</button><button type="button" class="entrega-cart" data-ec="domicilio" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>`;
     foot.prepend(wrap);
+  }
+  if (foot && !$("#pagoCart")) {
+    const w2 = document.createElement("div");
+    w2.id = "pagoCart";
+    w2.style.cssText = "display:flex;gap:8px;margin-bottom:12px";
+    w2.innerHTML = `<button type="button" class="pago-cart" data-pm="tarjeta" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">💳 Tarjeta</button><button type="button" class="pago-cart" data-pm="transferencia" style="flex:1;padding:10px;border-radius:10px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:12.5px;cursor:pointer">🏦 Transferencia</button>`;
+    $("#entregaCart")?.after(w2);
   }
   renderCart();
 }
