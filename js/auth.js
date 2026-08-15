@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 
-const OWNER_EMAIL = "dueno@ciclonorte.com";
+const OWNER_EMAILS = ["dueno@ciclonorte.com", "admincasanorco@gmail.com"];
+const esDueno = u => !!u && OWNER_EMAILS.includes((u.email || "").toLowerCase());
 let currentUser = null;
 
 const el = (s, r = document) => r.querySelector(s);
@@ -64,7 +65,7 @@ function injectButton() {
   host.appendChild(b);
   b.addEventListener("click", () => {
     if (!currentUser) { openModal("login"); return; }
-    window.location.href = currentUser.email === OWNER_EMAIL ? "panel.html" : "cuenta.html";
+    window.location.href = "cuenta.html";
   });
   updateButton();
 }
@@ -72,12 +73,9 @@ function injectButton() {
 function updateButton() {
   const b = document.getElementById("authBtn");
   if (b) {
-    if (currentUser) {
-      const lbl = currentUser.email === OWNER_EMAIL ? "Panel" : "Mi cuenta";
-      b.innerHTML = `${icon()}<span class="authLbl">${lbl}</span>`;
-    } else {
-      b.innerHTML = `${icon()}<span class="authLbl">Entrar</span>`;
-    }
+    b.innerHTML = currentUser
+      ? `${icon()}<span class="authLbl">Mi cuenta</span>`
+      : `${icon()}<span class="authLbl">Entrar</span>`;
   }
   updateMenuAuth();
 }
@@ -119,10 +117,6 @@ function updateMenuAuth() {
     b.className = "nav-item"; b.type = "button"; b.textContent = "Entrar / Crear cuenta";
     b.onclick = () => { cerrarMenu(); openModal("login"); };
     acc.appendChild(b);
-  } else if (currentUser.email === OWNER_EMAIL) {
-    const a = document.createElement("a");
-    a.href = "panel.html"; a.className = "nav-item"; a.textContent = "Panel";
-    acc.appendChild(a);
   } else {
     const a = document.createElement("a");
     a.href = "cuenta.html"; a.className = "nav-item"; a.textContent = "Mi cuenta";
