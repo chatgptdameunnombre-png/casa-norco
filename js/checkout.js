@@ -1,6 +1,13 @@
 import { COBRO_WEBHOOK, ENVIO_DOMICILIO } from "./config.js";
+import { db } from "./db.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
+
+let user = null, perfil = null;
+db.onAuth(async u => {
+  user = u;
+  perfil = u ? await db.getPerfil(u.uid).catch(() => null) : null;
+});
 
 export function iniciarPago({ items, productos, entrega, onError }) {
   if (entrega === "domicilio") {
@@ -31,7 +38,7 @@ function abrirModal(onConfirm, onCancel) {
         <h3 style="margin:0;font-size:19px;font-weight:800">¿A dónde lo enviamos?</h3>
         <button id="dirClose" style="background:none;border:none;color:#9a9aa2;font-size:22px;cursor:pointer;line-height:1">✕</button>
       </div>
-      <p style="margin:0 0 16px;font-size:13px;color:#9a9aa2">Envío a domicilio (+${money(ENVIO_DOMICILIO)}). Llena tus datos para la entrega.</p>
+      <p style="margin:0 0 16px;font-size:13px;color:#9a9aa2">${perfil ? "Envío a domicilio (+" + money(ENVIO_DOMICILIO) + "). Revisa que tus datos estén bien y confirma." : "Envío a domicilio (+" + money(ENVIO_DOMICILIO) + "). Llena tus datos para la entrega."}</p>
       <div style="display:flex;flex-direction:column;gap:10px">
         <input id="dNombre" placeholder="Nombre completo" ${inp()}>
         <input id="dTel" placeholder="Teléfono" inputmode="tel" ${inp()}>
@@ -51,6 +58,10 @@ function abrirModal(onConfirm, onCancel) {
     </div>`;
   document.body.appendChild(ov);
   const $ = s => ov.querySelector(s);
+  if (perfil) {
+    const pre = { dNombre: perfil.nombre, dTel: perfil.telefono, dCalle: perfil.calle, dCol: perfil.colonia, dCP: perfil.cp, dCiudad: perfil.ciudad, dEstado: perfil.estado, dRef: perfil.referencias };
+    for (const [id, v] of Object.entries(pre)) { if (v) $("#" + id).value = v; }
+  }
   const cerrar = () => { ov.remove(); if (onCancel) onCancel(); };
   $("#dirClose").onclick = cerrar;
   ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
@@ -60,6 +71,12 @@ function abrirModal(onConfirm, onCancel) {
     const ciudad = $("#dCiudad").value.trim(), estado = $("#dEstado").value.trim(), ref = $("#dRef").value.trim();
     if (!nombre || !tel || !calle || !col || !cp || !ciudad || !estado) { $("#dErr").textContent = "Completa nombre, teléfono, calle, colonia, C.P., ciudad y estado."; return; }
     const direccion = `${calle}, Col. ${col}, ${ciudad}, ${estado}, C.P. ${cp}${ref ? " (" + ref + ")" : ""}`;
+    if (user) {
+      db.guardarPerfil(user.uid, {
+        nombre, telefono: tel, calle, colonia: col, cp, ciudad, estado, referencias: ref,
+        email: user.email, actualizado: new Date().toISOString()
+      }).catch(() => {});
+    }
     $("#dGo").disabled = true; $("#dGo").textContent = "Generando pago…";
     ov.remove();
     onConfirm({ cliente: nombre, telefono: tel, direccion });
