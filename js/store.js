@@ -6,7 +6,7 @@ const $ = s => document.querySelector(s);
 const money = n => "$" + Number(n).toLocaleString("es-MX");
 const CAT = document.querySelector("#catalogo")?.dataset.categoria || null;
 const MODO_SEMI = document.querySelector("#catalogo")?.dataset.modo === "seminuevo";
-const base = () => MODO_SEMI ? productos.filter(p => p.seminuevo) : productos.filter(p => p.categoria === CAT);
+const base = () => MODO_SEMI ? productos.filter(p => p.seminuevo) : productos.filter(p => p.categoria === CAT && !p.seminuevo);
 
 let productos = [];
 let io;
@@ -42,7 +42,7 @@ function cardHTML(p) {
     : `<span class="card__ph">📷 Foto pendiente<br><small>(el dueño la sube en el panel)</small></span>`;
   const flags = [
     p.preventa ? `<span class="card__flag card__flag--pre">Preventa</span>` : "",
-    p.seminuevo ? `<span class="card__flag card__flag--semi">Seminuevo</span>` : ""
+    p.seminuevo ? `<span class="card__flag card__flag--semi">Usado</span>` : ""
   ].join("");
   return `
     <article class="card reveal" data-id="${p.id}">
