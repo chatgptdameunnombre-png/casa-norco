@@ -1,7 +1,11 @@
-import { COBRO_WEBHOOK, ENVIO_DOMICILIO } from "./config.js";
+import { COBRO_WEBHOOK, ENVIO_DOMICILIO, WHATSAPP_NUMERO } from "./config.js";
 import { db } from "./db.js";
 
 const money = n => "$" + Number(n).toLocaleString("es-MX");
+
+const CLABE_TRANSFERENCIA = "646180157099887766";
+const BANCO_TRANSFERENCIA = "STP";
+const BENEFICIARIO_TRANSFERENCIA = "Casa Norco (Cueva Bicycles)";
 
 let user = null, perfil = null;
 db.onAuth(async u => {
@@ -25,6 +29,51 @@ function enviarPago(payload, onError) {
     if (d.link) { window.location.href = d.link; return; }
     throw new Error("sin link");
   }).catch(() => { if (onError) onError(); });
+}
+
+export function iniciarTransferencia({ productos, entrega, total, onError }) {
+  if (entrega === "domicilio") {
+    abrirModal(datos => mostrarClabe({ productos, entrega, total, ...datos }), onError);
+  } else {
+    mostrarClabe({ productos, entrega, total });
+  }
+}
+
+function mostrarClabe({ productos, entrega, total, cliente, telefono, direccion }) {
+  if (document.getElementById("trOverlay")) return;
+  const ref = "CN-" + Date.now().toString().slice(-6);
+  const resumen = (productos || []).map(p => `${p.qty}x ${p.title}${p.talla ? " (T " + p.talla + ")" : ""}`).join(", ");
+  const entregaTxt = entrega === "domicilio" ? `Entrega a domicilio: ${direccion || ""}` : "Recoge en tienda";
+  const waMsg = encodeURIComponent(`Hola, hice mi pedido en la web (ref ${ref}).\nProductos: ${resumen}\nTotal: ${money(total)}\n${entregaTxt}\nAdjunto mi comprobante de transferencia.`);
+  const waLink = `https://wa.me/${WHATSAPP_NUMERO}?text=${waMsg}`;
+  const ov = document.createElement("div");
+  ov.id = "trOverlay";
+  ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(3px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.innerHTML = `
+    <div style="background:#141416;border:1px solid #26262c;border-radius:18px;max-width:440px;width:100%;padding:24px;font-family:inherit;color:#f4f4f5;max-height:92vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <h3 style="margin:0;font-size:19px;font-weight:800">Paga por transferencia</h3>
+        <button id="trClose" style="background:none;border:none;color:#9a9aa2;font-size:22px;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <p style="margin:0 0 16px;font-size:13px;color:#9a9aa2">Transfiere el total a esta cuenta y mándanos tu comprobante por WhatsApp. Confirmamos tu pedido en cuanto lo recibamos.</p>
+      <div style="background:#0e0e11;border:1px solid #2a2a30;border-radius:12px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Banco</span><b>${BANCO_TRANSFERENCIA}</b></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Beneficiario</span><b style="text-align:right">${BENEFICIARIO_TRANSFERENCIA}</b></div>
+        <div style="margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">CLABE</span><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><b id="trClabe" style="font-size:18px;letter-spacing:1px">${CLABE_TRANSFERENCIA}</b><button id="trCopy" style="background:#26262c;border:none;color:#c6f032;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer">Copiar</button></div></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:#9a9aa2;font-size:13px">Monto</span><b style="color:#c6f032;font-size:18px">${money(total)}</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:#9a9aa2;font-size:13px">Referencia</span><b>${ref}</b></div>
+      </div>
+      <a href="${waLink}" target="_blank" rel="noopener" style="display:block;text-align:center;background:#25D366;color:#fff;border-radius:12px;padding:14px;font-weight:800;font-size:15px;text-decoration:none">Enviar comprobante por WhatsApp</a>
+    </div>`;
+  document.body.appendChild(ov);
+  const q = s => ov.querySelector(s);
+  const cerrar = () => ov.remove();
+  q("#trClose").onclick = cerrar;
+  ov.addEventListener("click", e => { if (e.target === ov) cerrar(); });
+  q("#trCopy").onclick = () => {
+    navigator.clipboard?.writeText(CLABE_TRANSFERENCIA);
+    q("#trCopy").textContent = "Copiado ✓";
+  };
 }
 
 function abrirModal(onConfirm, onCancel) {
