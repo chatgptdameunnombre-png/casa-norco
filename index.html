@@ -129,6 +129,9 @@
     .maleta-col { flex:1; min-width:0; }
     .maleta-grid { display:flex; gap:14px; flex-wrap:wrap; }
     @media(max-width:600px){ .maleta-grid { flex-direction:column; } }
+    .otra-linea { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; color:#9a9aa2; font-weight:600; }
+    .cita-otra { color-scheme:dark; padding:9px 12px; border-radius:11px; border:1px dashed #4a5a18; background:#17171b; color:#c6f032; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+    .cita-otra:focus { outline:none; border-color:#c6f032; }
   </style>
   <section class="wrap sec" id="citas">
     <div class="sec-head reveal">
@@ -147,11 +150,11 @@
       <div id="ctTaller">
         <div class="citas-paso">1 · Elige el día</div>
         <div class="citas-dias" id="ctDias"></div>
-        <button type="button" class="dia-chip" id="ctOtraFecha" style="border-style:dashed;color:#c6f032;margin-top:8px">📅 Otra fecha</button>
-        <input type="date" id="ctOtroDia" style="position:absolute;left:-9999px;opacity:0">
+        <div class="otra-linea">📅 ¿Otro día? <input type="date" id="ctOtroDia" class="cita-otra"></div>
         <div id="ctBloqueHora" hidden>
           <div class="citas-paso">2 · Elige la hora</div>
           <div class="citas-slots" id="ctSlots"></div>
+          <div class="otra-linea">🕐 ¿Otra hora? <input type="time" id="ctOtraHora" class="cita-otra" step="1800"></div>
         </div>
         <div id="ctBloqueDatos" hidden>
           <div class="citas-paso">3 · Tus datos</div>
@@ -169,18 +172,18 @@
           <div class="maleta-col">
             <div class="citas-paso">1 · ¿Qué día la recoges?</div>
             <div class="citas-dias" id="cmDiasR"></div>
-            <button type="button" class="dia-chip" id="cmOtraFechaR" style="border-style:dashed;color:#c6f032;margin-top:8px">📅 Otra fecha</button>
-            <input type="date" id="cmOtroDiaR" style="position:absolute;left:-9999px;opacity:0">
+            <div class="otra-linea">📅 Otro día <input type="date" id="cmOtroDiaR" class="cita-otra"></div>
             <div class="citas-paso">Hora de recoger</div>
             <div class="citas-slots" id="cmHorasR"></div>
+            <div class="otra-linea">🕐 Otra hora <input type="time" id="cmOtraHoraR" class="cita-otra" step="1800"></div>
           </div>
           <div class="maleta-col">
             <div class="citas-paso">2 · ¿Qué día la regresas?</div>
             <div class="citas-dias" id="cmDiasD"></div>
-            <button type="button" class="dia-chip" id="cmOtraFechaD" style="border-style:dashed;color:#c6f032;margin-top:8px">📅 Otra fecha</button>
-            <input type="date" id="cmOtroDiaD" style="position:absolute;left:-9999px;opacity:0">
+            <div class="otra-linea">📅 Otro día <input type="date" id="cmOtroDiaD" class="cita-otra"></div>
             <div class="citas-paso">Hora de regreso</div>
             <div class="citas-slots" id="cmHorasD"></div>
+            <div class="otra-linea">🕐 Otra hora <input type="time" id="cmOtraHoraD" class="cita-otra" step="1800"></div>
           </div>
         </div>
         <div class="citas-paso">3 · Tus datos</div>
@@ -360,7 +363,7 @@
   })();
   </script>
   <script type="module" src="js/home-secciones.js?v=21"></script>
-  <script type="module" src="js/citas-home.js?v=24"></script>
+  <script type="module" src="js/citas-home.js?v=25"></script>
   <script type="module" src="js/auth.js?v=21"></script>
 </body>
 </html>
