@@ -25,13 +25,13 @@ function proximosDias(n) {
   }
   return out;
 }
-function chipDia(x) {
-  const f = `${x.getFullYear()}-${dosDig(x.getMonth() + 1)}-${dosDig(x.getDate())}`;
-  return `<button type="button" class="dia-chip" data-fecha="${f}">${x.getDate()}<small>${DIASEM[x.getDay()]} ${MES[x.getMonth()]}</small></button>`;
-}
+const chipDia = x => `<button type="button" class="dia-chip" data-fecha="${x.getFullYear()}-${dosDig(x.getMonth() + 1)}-${dosDig(x.getDate())}">${x.getDate()}<small>${DIASEM[x.getDay()]} ${MES[x.getMonth()]}</small></button>`;
+const chipEtiquetaFecha = f => { const x = new Date(f + "T00:00:00"); return `${x.getDate()} ${MES[x.getMonth()]}`; };
+function horasChips() { const hs = []; for (let h = 9; h <= 18; h++) hs.push(dosDig(h) + ":00"); return hs; }
+function abrirPicker(inp) { const i = $(inp); if (!i) return; try { i.showPicker(); } catch { i.click(); } }
 
-// límites de fecha (hoy → diciembre) en todos los inputs de fecha
-["#ctOtroDia", "#cmDiaR", "#cmDiaD"].forEach(s => { if ($(s)) { $(s).min = hoyStr(); $(s).max = MAX; } });
+// límites hoy → diciembre en los inputs de fecha ocultos
+["#ctOtroDia", "#cmOtroDiaR", "#cmOtroDiaD"].forEach(s => { if ($(s)) { $(s).min = hoyStr(); $(s).max = MAX; } });
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click", () => {
@@ -48,6 +48,8 @@ async function seleccionarDiaTaller(fecha, chipEl) {
   if (fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Por ahora solo agendamos hasta diciembre."; return; }
   tDia = fecha; tHora = null;
   document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === chipEl));
+  $("#ctOtraFecha").classList.toggle("on", !chipEl);
+  if (!chipEl) $("#ctOtraFecha").innerHTML = `📅 ${chipEtiquetaFecha(fecha)}`;
   $("#ctBloqueDatos").hidden = true; $("#ctMsg").textContent = "";
   const slots = $("#ctSlots"); $("#ctBloqueHora").hidden = false;
   if (!abierto(fecha)) { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">Ese día estamos cerrados (domingo). Elige otro.</span>`; return; }
@@ -61,9 +63,10 @@ async function seleccionarDiaTaller(fecha, chipEl) {
 }
 $("#ctDias")?.addEventListener("click", e => {
   const c = e.target.closest(".dia-chip"); if (!c) return;
-  if ($("#ctOtroDia")) $("#ctOtroDia").value = "";
+  $("#ctOtraFecha").innerHTML = "📅 Otra fecha"; if ($("#ctOtroDia")) $("#ctOtroDia").value = "";
   seleccionarDiaTaller(c.dataset.fecha, c);
 });
+$("#ctOtraFecha")?.addEventListener("click", () => abrirPicker("#ctOtroDia"));
 $("#ctOtroDia")?.addEventListener("change", e => { if (e.target.value) seleccionarDiaTaller(e.target.value, null); });
 
 $("#ctSlots")?.addEventListener("click", e => {
@@ -80,26 +83,59 @@ $("#ctGo")?.addEventListener("click", async () => {
   const btn = $("#ctGo"); btn.disabled = true; btn.textContent = "Agendando…";
   try {
     const r = await postJSON(CITAS_TALLER_AGENDAR, { fecha: tDia, hora: tHora, nombre, telefono: tel, servicio });
-    if (r && r.ok) {
-      $("#ctTaller").innerHTML = `<div class="citas-ok">✓ ¡Listo! Tu cita en el taller quedó para el <b>${fechaBonita(tDia)}</b> a las <b>${to12(tHora)}</b>.<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Te esperamos.</span></div>`;
-    } else { throw new Error(); }
+    if (r && r.ok) $("#ctTaller").innerHTML = `<div class="citas-ok">✓ ¡Listo! Tu cita quedó para el <b>${fechaBonita(tDia)}</b> a las <b>${to12(tHora)}</b>.<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Te esperamos.</span></div>`;
+    else throw new Error();
   } catch { msg.textContent = "No se pudo agendar. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Agendar cita"; }
 });
 
-/* ---------- MALETA (simple: día + hora directos) ---------- */
+/* ---------- MALETA (botones) ---------- */
+let mR = null, mRh = null, mD = null, mDh = null;
+if ($("#cmDiasR")) {
+  $("#cmDiasR").innerHTML = proximosDias(6).map(chipDia).join("");
+  $("#cmDiasD").innerHTML = proximosDias(6).map(chipDia).join("");
+  const hc = () => horasChips().map(h => `<button type="button" class="slot-chip" data-h="${h}">${to12(h)}</button>`).join("");
+  $("#cmHorasR").innerHTML = hc();
+  $("#cmHorasD").innerHTML = hc();
+}
+function bindDiasMaleta(cont, btn, inp, set) {
+  $(cont)?.addEventListener("click", e => {
+    const c = e.target.closest(".dia-chip"); if (!c) return;
+    $(btn).innerHTML = "📅 Otra fecha"; if ($(inp)) $(inp).value = "";
+    $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
+    $(btn).classList.remove("on");
+    set(c.dataset.fecha);
+  });
+  $(btn)?.addEventListener("click", () => abrirPicker(inp));
+  $(inp)?.addEventListener("change", e => {
+    if (!e.target.value) return;
+    if (e.target.value > MAX) { alert("Solo apartamos hasta diciembre."); return; }
+    $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
+    $(btn).classList.add("on"); $(btn).innerHTML = "📅 " + chipEtiquetaFecha(e.target.value);
+    set(e.target.value);
+  });
+}
+function bindHoras(sel, set) {
+  $(sel)?.addEventListener("click", e => {
+    const c = e.target.closest(".slot-chip"); if (!c) return;
+    $(sel).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
+    set(c.dataset.h);
+  });
+}
+bindDiasMaleta("#cmDiasR", "#cmOtraFechaR", "#cmOtroDiaR", v => mR = v);
+bindDiasMaleta("#cmDiasD", "#cmOtraFechaD", "#cmOtroDiaD", v => mD = v);
+bindHoras("#cmHorasR", v => mRh = v);
+bindHoras("#cmHorasD", v => mDh = v);
+
 $("#cmGo")?.addEventListener("click", async () => {
-  const dr = $("#cmDiaR").value, hr = $("#cmHoraR").value, dd = $("#cmDiaD").value, hd = $("#cmHoraD").value;
   const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
   const msg = $("#cmMsg"); msg.style.color = "#ff6b6b"; msg.textContent = "";
-  if (!dr || !hr || !dd || !hd) { msg.textContent = "Completa día y hora de recoger y de regreso."; return; }
-  if (dr > MAX || dd > MAX) { msg.textContent = "Por ahora solo apartamos hasta diciembre."; return; }
+  if (!mR || !mRh || !mD || !mDh) { msg.textContent = "Elige día y hora de recoger y de regreso."; return; }
   if (!nombre || !tel) { msg.textContent = "Pon tu nombre y teléfono."; return; }
-  if (new Date(`${dd}T${hd}`) <= new Date(`${dr}T${hr}`)) { msg.textContent = "El regreso debe ser después de recoger."; return; }
+  if (new Date(`${mD}T${mDh}`) <= new Date(`${mR}T${mRh}`)) { msg.textContent = "El regreso debe ser después de recoger."; return; }
   const btn = $("#cmGo"); btn.disabled = true; btn.textContent = "Apartando…";
   try {
-    const r = await postJSON(CITAS_MALETA_AGENDAR, { fechaR: dr, horaR: hr, fechaD: dd, horaD: hd, nombre, telefono: tel });
-    if (r && r.ok) {
-      $("#ctMaleta").innerHTML = `<div class="citas-ok">✓ ¡Maleta apartada!<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Recoges el ${fechaBonita(dr)} a las ${to12(hr)}, regresas el ${fechaBonita(dd)} a las ${to12(hd)}.</span></div>`;
-    } else { msg.style.color = "#ff6b6b"; msg.textContent = (r && r.mensaje) || "Esas fechas ya están apartadas. Elige otras."; btn.disabled = false; btn.textContent = "Apartar maleta"; }
+    const r = await postJSON(CITAS_MALETA_AGENDAR, { fechaR: mR, horaR: mRh, fechaD: mD, horaD: mDh, nombre, telefono: tel });
+    if (r && r.ok) $("#ctMaleta").innerHTML = `<div class="citas-ok">✓ ¡Maleta apartada!<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Recoges el ${fechaBonita(mR)} a las ${to12(mRh)}, regresas el ${fechaBonita(mD)} a las ${to12(mDh)}.</span></div>`;
+    else { msg.textContent = (r && r.mensaje) || "Esas fechas ya están apartadas. Elige otras."; btn.disabled = false; btn.textContent = "Apartar maleta"; }
   } catch { msg.textContent = "No se pudo. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Apartar maleta"; }
 });
