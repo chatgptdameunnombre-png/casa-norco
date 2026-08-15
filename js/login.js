@@ -1,10 +1,6 @@
-import { db, MODO, CREDS_DEMO } from "./db.js";
+import { db } from "./db.js?v=20";
 
 const $ = s => document.querySelector(s);
-
-$("#loginHint").innerHTML = MODO === "nube"
-  ? "🔒 Conectado a Firebase. Entra con el correo que diste de alta en Authentication."
-  : `🧪 <b>Modo demo</b> — entra con:<br>Correo: <b>${CREDS_DEMO.email}</b><br>Contraseña: <b>${CREDS_DEMO.pass}</b>`;
 
 db.onAuth(user => {
   if (user) window.location.replace("panel.html");
