@@ -189,8 +189,13 @@
         <div class="citas-paso">3 · Tus datos</div>
         <input id="cmNombre" class="citas-inp" placeholder="Tu nombre">
         <input id="cmTel" class="citas-inp" placeholder="Tu teléfono" inputmode="tel">
-        <input id="cmDireccion" class="citas-inp" placeholder="Tu dirección (calle, número, colonia)">
-        <p style="font-size:12px;color:#9a9aa2;margin:-4px 0 10px">La pedimos como respaldo de la maleta rentada.</p>
+        <div class="citas-paso" style="color:#9a9aa2;font-weight:600;margin-top:6px">Tu dirección (respaldo de la maleta)</div>
+        <input id="cmCalle" class="citas-inp" placeholder="Calle y número">
+        <div style="display:flex;gap:10px">
+          <input id="cmColonia" class="citas-inp" placeholder="Colonia" style="flex:2;min-width:0">
+          <input id="cmCP" class="citas-inp" placeholder="C.P." inputmode="numeric" style="flex:1;min-width:0">
+        </div>
+        <input id="cmCiudad" class="citas-inp" placeholder="Ciudad">
         <button id="cmGo" class="citas-btn">Apartar maleta</button>
         <div class="citas-msg" id="cmMsg"></div>
       </div>
@@ -365,7 +370,7 @@
   })();
   </script>
   <script type="module" src="js/home-secciones.js?v=21"></script>
-  <script type="module" src="js/citas-home.js?v=30"></script>
+  <script type="module" src="js/citas-home.js?v=31"></script>
   <script type="module" src="js/auth.js?v=21"></script>
 </body>
 </html>
