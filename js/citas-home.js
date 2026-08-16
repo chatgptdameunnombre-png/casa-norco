@@ -140,14 +140,15 @@ bindHoras("#cmHorasR", "#cmOtraHoraR", v => mRh = v);
 bindHoras("#cmHorasD", "#cmOtraHoraD", v => mDh = v);
 
 $("#cmGo")?.addEventListener("click", async () => {
-  const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
+  const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim(), direccion = $("#cmDireccion").value.trim();
   const msg = $("#cmMsg"); msg.style.color = "#ff6b6b"; msg.textContent = "";
   if (!mR || !mRh || !mD || !mDh) { msg.textContent = "Elige día y hora de recoger y de regreso."; return; }
   if (!nombre || !tel) { msg.textContent = "Pon tu nombre y teléfono."; return; }
+  if (!direccion) { msg.textContent = "Pon tu dirección (respaldo de la maleta)."; return; }
   if (new Date(`${mD}T${mDh}`) <= new Date(`${mR}T${mRh}`)) { msg.textContent = "El regreso debe ser después de recoger."; return; }
   const btn = $("#cmGo"); btn.disabled = true; btn.textContent = "Apartando…";
   try {
-    const r = await postJSON(CITAS_MALETA_AGENDAR, { fechaR: mR, horaR: mRh, fechaD: mD, horaD: mDh, nombre, telefono: tel });
+    const r = await postJSON(CITAS_MALETA_AGENDAR, { fechaR: mR, horaR: mRh, fechaD: mD, horaD: mDh, nombre, telefono: tel, direccion });
     if (r && r.ok) $("#ctMaleta").innerHTML = `<div class="citas-ok">✓ ¡Maleta apartada!<br><span style="color:#9a9aa2;font-weight:500;font-size:13px">Recoges el ${fechaBonita(mR)} a las ${to12(mRh)}, regresas el ${fechaBonita(mD)} a las ${to12(mDh)}.</span></div>`;
     else { msg.textContent = (r && r.mensaje) || "Esas fechas ya están apartadas. Elige otras."; btn.disabled = false; btn.textContent = "Apartar maleta"; }
   } catch { msg.textContent = "No se pudo. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Apartar maleta"; }
