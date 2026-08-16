@@ -12,6 +12,10 @@ const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig
 const abierto = f => !!HORARIOS[new Date(f + "T00:00:00").getDay()];
 const horaValida = hhmm => { const h = Number(hhmm.split(":")[0]); return h >= 9 && h <= 18; };
 const anioOk = f => f.slice(0, 4) === "2026"; // solo se agenda en 2026
+const fechaCorta = f => { const [y, m, d] = f.split("-").map(Number); return `${d} ${MES[m - 1]} ${y}`; };
+const DEF_FECHA = "📅 Otras fechas · da click aquí";
+const DEF_HORA = "🕐 Otras horas · da click aquí";
+function setBox(txtId, txt, sel) { const t = $(txtId); if (!t) return; t.textContent = txt; const box = t.closest(".otra-box"); if (box) box.classList.toggle("sel", !!sel); }
 
 async function postJSON(url, body) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -47,7 +51,7 @@ let tDia = null, tHora = null;
 if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(6).map(chipDia).join("");
 
 async function seleccionarDiaTaller(fecha, desdeChip) {
-  if (!anioOk(fecha) || fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Solo agendamos en 2026 (hasta diciembre)."; if ($("#ctOtroDia")) $("#ctOtroDia").value = ""; return; }
+  if (!anioOk(fecha) || fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Solo agendamos en 2026 (hasta diciembre)."; if ($("#ctOtroDia")) $("#ctOtroDia").value = ""; setBox("#ctOtroDiaTxt", DEF_FECHA, false); return; }
   tDia = fecha; tHora = null;
   document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === desdeChip));
   if (!desdeChip && $("#ctOtroDia").value !== fecha) $("#ctOtroDia").value = fecha;
@@ -58,7 +62,7 @@ async function seleccionarDiaTaller(fecha, desdeChip) {
   try {
     const r = await postJSON(CITAS_TALLER_HORARIOS, { fecha });
     const libres = r && Array.isArray(r.horarios) ? r.horarios : [];
-    if (!libres.length) { slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Usa "¿Otra hora?" o elige otro día.</span>`; return; }
+    if (!libres.length) { slots.innerHTML = `<span style="color:#9a9aa2;font-size:13px">No hay horarios libres ese día. Usa "Otras horas" o elige otro día.</span>`; return; }
     slots.innerHTML = libres.map(h => `<button type="button" class="slot-chip" data-hora="${h}">${to12(h)}</button>`).join("");
   } catch { slots.innerHTML = `<span style="color:#ff6b6b;font-size:13px">No se pudo cargar. Intenta de nuevo.</span>`; }
 }
@@ -70,17 +74,25 @@ function fijarHoraTaller(hora, desdeChip) {
 $("#ctDias")?.addEventListener("click", e => {
   const c = e.target.closest(".dia-chip"); if (!c) return;
   if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
+  setBox("#ctOtroDiaTxt", DEF_FECHA, false); setBox("#ctOtraHoraTxt", DEF_HORA, false);
   seleccionarDiaTaller(c.dataset.fecha, c);
 });
-$("#ctOtroDia")?.addEventListener("change", e => { if (e.target.value) seleccionarDiaTaller(e.target.value, null); });
+$("#ctOtroDia")?.addEventListener("change", e => {
+  if (!e.target.value) return;
+  setBox("#ctOtroDiaTxt", "📅 " + fechaCorta(e.target.value) + " · cambiar", true);
+  setBox("#ctOtraHoraTxt", DEF_HORA, false);
+  seleccionarDiaTaller(e.target.value, null);
+});
 $("#ctSlots")?.addEventListener("click", e => {
   const c = e.target.closest(".slot-chip"); if (!c) return;
   if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
+  setBox("#ctOtraHoraTxt", DEF_HORA, false);
   fijarHoraTaller(c.dataset.hora, c);
 });
 $("#ctOtraHora")?.addEventListener("change", e => {
   const v = e.target.value; if (!v) return;
-  if (!horaValida(v)) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "El taller abre de 9:00 am a 7:00 pm."; e.target.value = ""; return; }
+  if (!horaValida(v)) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "El taller abre de 9:00 am a 7:00 pm."; e.target.value = ""; setBox("#ctOtraHoraTxt", DEF_HORA, false); return; }
+  setBox("#ctOtraHoraTxt", "🕐 " + to12(v) + " · cambiar", true);
   $("#ctMsg").textContent = ""; fijarHoraTaller(v, null);
 });
 $("#ctGo")?.addEventListener("click", async () => {
@@ -106,38 +118,42 @@ if ($("#cmDiasR")) {
   $("#cmHorasR").innerHTML = hc();
   $("#cmHorasD").innerHTML = hc();
 }
-function bindDias(cont, inp, set) {
+function bindDias(cont, inp, txtId, set) {
   $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".dia-chip"); if (!c) return;
     if ($(inp)) $(inp).value = "";
+    setBox(txtId, DEF_FECHA, false);
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
     set(c.dataset.fecha);
   });
   $(inp)?.addEventListener("change", e => {
     if (!e.target.value) return;
-    if (!anioOk(e.target.value) || e.target.value > MAX) { alert("Solo apartamos en 2026 (hasta diciembre)."); e.target.value = ""; return; }
+    if (!anioOk(e.target.value) || e.target.value > MAX) { alert("Solo apartamos en 2026 (hasta diciembre)."); e.target.value = ""; setBox(txtId, DEF_FECHA, false); return; }
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
+    setBox(txtId, "📅 " + fechaCorta(e.target.value) + " · cambiar", true);
     set(e.target.value);
   });
 }
-function bindHoras(cont, inp, set) {
+function bindHoras(cont, inp, txtId, set) {
   $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".slot-chip"); if (!c) return;
     if ($(inp)) $(inp).value = "";
+    setBox(txtId, DEF_HORA, false);
     $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
     set(c.dataset.h);
   });
   $(inp)?.addEventListener("change", e => {
     const v = e.target.value; if (!v) return;
-    if (!horaValida(v)) { alert("Horario de 9:00 am a 7:00 pm."); e.target.value = ""; return; }
+    if (!horaValida(v)) { alert("Horario de 9:00 am a 7:00 pm."); e.target.value = ""; setBox(txtId, DEF_HORA, false); return; }
     $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.remove("on"));
+    setBox(txtId, "🕐 " + to12(v) + " · cambiar", true);
     set(v);
   });
 }
-bindDias("#cmDiasR", "#cmOtroDiaR", v => mR = v);
-bindDias("#cmDiasD", "#cmOtroDiaD", v => mD = v);
-bindHoras("#cmHorasR", "#cmOtraHoraR", v => mRh = v);
-bindHoras("#cmHorasD", "#cmOtraHoraD", v => mDh = v);
+bindDias("#cmDiasR", "#cmOtroDiaR", "#cmOtroDiaRTxt", v => mR = v);
+bindDias("#cmDiasD", "#cmOtroDiaD", "#cmOtroDiaDTxt", v => mD = v);
+bindHoras("#cmHorasR", "#cmOtraHoraR", "#cmOtraHoraRTxt", v => mRh = v);
+bindHoras("#cmHorasD", "#cmOtraHoraD", "#cmOtraHoraDTxt", v => mDh = v);
 
 $("#cmGo")?.addEventListener("click", async () => {
   const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
