@@ -32,7 +32,8 @@ function horasChips() { const hs = []; for (let h = 9; h <= 18; h++) hs.push(dos
 
 // límites hoy → diciembre en todos los inputs nativos
 ["#ctOtroDia", "#cmOtroDiaR", "#cmOtroDiaD"].forEach(s => { if ($(s)) { $(s).min = hoyStr(); $(s).max = MAX; } });
-["#ctOtraHora", "#cmOtraHoraR", "#cmOtraHoraD"].forEach(s => { if ($(s)) { $(s).min = "09:00"; $(s).max = "19:00"; } });
+if ($("#ctOtraHora")) { $("#ctOtraHora").min = "09:00"; $("#ctOtraHora").max = "17:00"; }
+["#cmOtraHoraR", "#cmOtraHoraD"].forEach(s => { if ($(s)) { $(s).min = "09:00"; $(s).max = "19:00"; } });
 
 /* ---------- tabs ---------- */
 document.querySelectorAll(".citas-tab").forEach(b => b.addEventListener("click", () => {
