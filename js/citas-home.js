@@ -140,11 +140,13 @@ bindHoras("#cmHorasR", "#cmOtraHoraR", v => mRh = v);
 bindHoras("#cmHorasD", "#cmOtraHoraD", v => mDh = v);
 
 $("#cmGo")?.addEventListener("click", async () => {
-  const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim(), direccion = $("#cmDireccion").value.trim();
+  const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
+  const calle = $("#cmCalle").value.trim(), colonia = $("#cmColonia").value.trim(), cp = $("#cmCP").value.trim(), ciudad = $("#cmCiudad").value.trim();
   const msg = $("#cmMsg"); msg.style.color = "#ff6b6b"; msg.textContent = "";
   if (!mR || !mRh || !mD || !mDh) { msg.textContent = "Elige día y hora de recoger y de regreso."; return; }
   if (!nombre || !tel) { msg.textContent = "Pon tu nombre y teléfono."; return; }
-  if (!direccion) { msg.textContent = "Pon tu dirección (respaldo de la maleta)."; return; }
+  if (!calle || !colonia || !cp || !ciudad) { msg.textContent = "Completa tu dirección (calle, colonia, C.P. y ciudad)."; return; }
+  const direccion = `${calle}, Col. ${colonia}, ${ciudad}, C.P. ${cp}`;
   if (new Date(`${mD}T${mDh}`) <= new Date(`${mR}T${mRh}`)) { msg.textContent = "El regreso debe ser después de recoger."; return; }
   const btn = $("#cmGo"); btn.disabled = true; btn.textContent = "Apartando…";
   try {
