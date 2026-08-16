@@ -12,10 +12,6 @@ const hoyStr = () => { const d = new Date(); return `${d.getFullYear()}-${dosDig
 const abierto = f => !!HORARIOS[new Date(f + "T00:00:00").getDay()];
 const horaValida = hhmm => { const h = Number(hhmm.split(":")[0]); return h >= 9 && h <= 18; };
 const anioOk = f => f.slice(0, 4) === "2026"; // solo se agenda en 2026
-const fechaCorta = f => { const [y, m, d] = f.split("-").map(Number); return `${d} ${MES[m - 1]} ${y}`; };
-const DEF_FECHA = "📅 Otras fechas · da click aquí";
-const DEF_HORA = "🕐 Otras horas · da click aquí";
-function setBox(txtId, txt, sel) { const t = $(txtId); if (!t) return; t.textContent = txt; const box = t.closest(".otra-box"); if (box) box.classList.toggle("sel", !!sel); }
 
 async function postJSON(url, body) {
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -34,7 +30,7 @@ function proximosDias(n) {
 const chipDia = x => `<button type="button" class="dia-chip" data-fecha="${x.getFullYear()}-${dosDig(x.getMonth() + 1)}-${dosDig(x.getDate())}">${x.getDate()}<small>${DIASEM[x.getDay()]} ${MES[x.getMonth()]}</small></button>`;
 function horasChips() { const hs = []; for (let h = 9; h <= 18; h++) hs.push(dosDig(h) + ":00"); return hs; }
 
-// límites hoy → diciembre en todos los inputs nativos
+// límites hoy → diciembre en los inputs nativos
 ["#ctOtroDia", "#cmOtroDiaR", "#cmOtroDiaD"].forEach(s => { if ($(s)) { $(s).min = hoyStr(); $(s).max = MAX; } });
 if ($("#ctOtraHora")) { $("#ctOtraHora").min = "09:00"; $("#ctOtraHora").max = "17:00"; }
 ["#cmOtraHoraR", "#cmOtraHoraD"].forEach(s => { if ($(s)) { $(s).min = "09:00"; $(s).max = "19:00"; } });
@@ -51,7 +47,7 @@ let tDia = null, tHora = null;
 if ($("#ctDias")) $("#ctDias").innerHTML = proximosDias(6).map(chipDia).join("");
 
 async function seleccionarDiaTaller(fecha, desdeChip) {
-  if (!anioOk(fecha) || fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Solo agendamos en 2026 (hasta diciembre)."; if ($("#ctOtroDia")) $("#ctOtroDia").value = ""; setBox("#ctOtroDiaTxt", DEF_FECHA, false); return; }
+  if (!anioOk(fecha) || fecha > MAX) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "Solo agendamos en 2026 (hasta diciembre)."; if ($("#ctOtroDia")) $("#ctOtroDia").value = ""; return; }
   tDia = fecha; tHora = null;
   document.querySelectorAll("#ctDias .dia-chip").forEach(x => x.classList.toggle("on", x === desdeChip));
   if (!desdeChip && $("#ctOtroDia").value !== fecha) $("#ctOtroDia").value = fecha;
@@ -74,25 +70,17 @@ function fijarHoraTaller(hora, desdeChip) {
 $("#ctDias")?.addEventListener("click", e => {
   const c = e.target.closest(".dia-chip"); if (!c) return;
   if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
-  setBox("#ctOtroDiaTxt", DEF_FECHA, false); setBox("#ctOtraHoraTxt", DEF_HORA, false);
   seleccionarDiaTaller(c.dataset.fecha, c);
 });
-$("#ctOtroDia")?.addEventListener("change", e => {
-  if (!e.target.value) return;
-  setBox("#ctOtroDiaTxt", "📅 " + fechaCorta(e.target.value) + " · cambiar", true);
-  setBox("#ctOtraHoraTxt", DEF_HORA, false);
-  seleccionarDiaTaller(e.target.value, null);
-});
+$("#ctOtroDia")?.addEventListener("change", e => { if (e.target.value) seleccionarDiaTaller(e.target.value, null); });
 $("#ctSlots")?.addEventListener("click", e => {
   const c = e.target.closest(".slot-chip"); if (!c) return;
   if ($("#ctOtraHora")) $("#ctOtraHora").value = "";
-  setBox("#ctOtraHoraTxt", DEF_HORA, false);
   fijarHoraTaller(c.dataset.hora, c);
 });
 $("#ctOtraHora")?.addEventListener("change", e => {
   const v = e.target.value; if (!v) return;
-  if (!horaValida(v)) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "El taller abre de 9:00 am a 7:00 pm."; e.target.value = ""; setBox("#ctOtraHoraTxt", DEF_HORA, false); return; }
-  setBox("#ctOtraHoraTxt", "🕐 " + to12(v) + " · cambiar", true);
+  if (!horaValida(v)) { $("#ctMsg").style.color = "#ff6b6b"; $("#ctMsg").textContent = "El taller abre de 9:00 am a 7:00 pm."; e.target.value = ""; return; }
   $("#ctMsg").textContent = ""; fijarHoraTaller(v, null);
 });
 $("#ctGo")?.addEventListener("click", async () => {
@@ -109,7 +97,7 @@ $("#ctGo")?.addEventListener("click", async () => {
   } catch { msg.textContent = "No se pudo agendar. Intenta de nuevo."; btn.disabled = false; btn.textContent = "Agendar cita"; }
 });
 
-/* ---------- MALETA (botones + otro día / otra hora) ---------- */
+/* ---------- MALETA ---------- */
 let mR = null, mRh = null, mD = null, mDh = null;
 if ($("#cmDiasR")) {
   $("#cmDiasR").innerHTML = proximosDias(6).map(chipDia).join("");
@@ -118,42 +106,38 @@ if ($("#cmDiasR")) {
   $("#cmHorasR").innerHTML = hc();
   $("#cmHorasD").innerHTML = hc();
 }
-function bindDias(cont, inp, txtId, set) {
+function bindDias(cont, inp, set) {
   $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".dia-chip"); if (!c) return;
     if ($(inp)) $(inp).value = "";
-    setBox(txtId, DEF_FECHA, false);
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.toggle("on", x === c));
     set(c.dataset.fecha);
   });
   $(inp)?.addEventListener("change", e => {
     if (!e.target.value) return;
-    if (!anioOk(e.target.value) || e.target.value > MAX) { alert("Solo apartamos en 2026 (hasta diciembre)."); e.target.value = ""; setBox(txtId, DEF_FECHA, false); return; }
+    if (!anioOk(e.target.value) || e.target.value > MAX) { alert("Solo apartamos en 2026 (hasta diciembre)."); e.target.value = ""; return; }
     $(cont).querySelectorAll(".dia-chip").forEach(x => x.classList.remove("on"));
-    setBox(txtId, "📅 " + fechaCorta(e.target.value) + " · cambiar", true);
     set(e.target.value);
   });
 }
-function bindHoras(cont, inp, txtId, set) {
+function bindHoras(cont, inp, set) {
   $(cont)?.addEventListener("click", e => {
     const c = e.target.closest(".slot-chip"); if (!c) return;
     if ($(inp)) $(inp).value = "";
-    setBox(txtId, DEF_HORA, false);
     $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.toggle("on", x === c));
     set(c.dataset.h);
   });
   $(inp)?.addEventListener("change", e => {
     const v = e.target.value; if (!v) return;
-    if (!horaValida(v)) { alert("Horario de 9:00 am a 7:00 pm."); e.target.value = ""; setBox(txtId, DEF_HORA, false); return; }
+    if (!horaValida(v)) { alert("Horario de 9:00 am a 7:00 pm."); e.target.value = ""; return; }
     $(cont).querySelectorAll(".slot-chip").forEach(x => x.classList.remove("on"));
-    setBox(txtId, "🕐 " + to12(v) + " · cambiar", true);
     set(v);
   });
 }
-bindDias("#cmDiasR", "#cmOtroDiaR", "#cmOtroDiaRTxt", v => mR = v);
-bindDias("#cmDiasD", "#cmOtroDiaD", "#cmOtroDiaDTxt", v => mD = v);
-bindHoras("#cmHorasR", "#cmOtraHoraR", "#cmOtraHoraRTxt", v => mRh = v);
-bindHoras("#cmHorasD", "#cmOtraHoraD", "#cmOtraHoraDTxt", v => mDh = v);
+bindDias("#cmDiasR", "#cmOtroDiaR", v => mR = v);
+bindDias("#cmDiasD", "#cmOtroDiaD", v => mD = v);
+bindHoras("#cmHorasR", "#cmOtraHoraR", v => mRh = v);
+bindHoras("#cmHorasD", "#cmOtraHoraD", v => mDh = v);
 
 $("#cmGo")?.addEventListener("click", async () => {
   const nombre = $("#cmNombre").value.trim(), tel = $("#cmTel").value.trim();
