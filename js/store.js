@@ -12,7 +12,8 @@ const base = () => MODO_SEMI ? productos.filter(p => p.seminuevo) : productos.fi
 let productos = [];
 let io;
 let panelListo = false;
-let f = { sub: "Todas", marca: "Todas", genero: "Todos", orden: "rel" };
+const _marcaURL = new URLSearchParams(location.search).get("marca");
+let f = { sub: "Todas", marca: _marcaURL || "Todas", genero: "Todos", orden: "rel" };
 
 /* ---------- badge de modo ---------- */
 const badge = document.createElement("div");
