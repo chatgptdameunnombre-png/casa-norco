@@ -100,21 +100,22 @@
 
   <!-- ================= COMPRA POR MARCA ================= -->
   <style>
-    .marcas-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
-    @media(max-width:760px){ .marcas-grid { grid-template-columns:repeat(2,1fr); } }
-    .marca-t { display:grid; place-items:center; padding:30px 20px; background:#141416; border:1px solid #26262c; border-radius:16px; transition:transform .35s, border-color .35s, box-shadow .35s; }
-    .marca-t img { max-width:150px; max-height:56px; width:100%; object-fit:contain; filter:brightness(0) invert(1); opacity:.5; transition:opacity .35s, transform .35s; }
-    .marca-t:hover { border-color:#c6f032; transform:translateY(-5px); box-shadow:0 12px 34px rgba(198,240,50,.1); }
-    .marca-t:hover img { opacity:1; transform:scale(1.06); }
+    .marcas-row { display:flex; gap:16px; overflow-x:auto; padding:6px 2px 16px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+    .marcas-row::-webkit-scrollbar { height:7px; }
+    .marcas-row::-webkit-scrollbar-track { background:transparent; }
+    .marcas-row::-webkit-scrollbar-thumb { background:#2a2a30; border-radius:4px; }
+    .marca-t { flex:0 0 205px; height:158px; display:grid; place-items:center; padding:16px; scroll-snap-align:start; background:#141416; border:1px solid #26262c; border-radius:16px; transition:transform .35s, border-color .35s, box-shadow .35s; }
+    .marca-t img { max-width:172px; max-height:118px; width:100%; object-fit:contain; filter:brightness(0) invert(1); opacity:.65; transition:opacity .35s, transform .35s; }
+    .marca-t:hover { border-color:#c6f032; transform:translateY(-5px); box-shadow:0 12px 34px rgba(198,240,50,.12); }
+    .marca-t:hover img { opacity:1; transform:scale(1.07); }
+    @media(max-width:600px){ .marca-t { flex-basis:168px; height:130px; padding:14px; } .marca-t img { max-height:96px; } }
   </style>
-  <section class="wrap sec" id="marcas">
-    <div class="sec-head reveal">
-      <span class="eyebrow">Las mejores marcas</span>
-      <h2>Compra por marca</h2>
-      <p>Toca una marca para ver todos sus productos.</p>
-      <span class="rule"></span>
+  <section class="wrap sec" id="marcas" style="padding-top:6px">
+    <div class="sec-head reveal" style="text-align:left;margin-bottom:14px">
+      <h2 style="font-size:26px;margin:0">Compra por marca</h2>
+      <p style="margin:6px 0 0">Toca una marca para ver todos sus productos.</p>
     </div>
-    <div class="marcas-grid reveal">
+    <div class="marcas-row reveal">
       <a class="marca-t" href="bicicletas.html?marca=Norco" aria-label="Norco"><img src="fotos/marcas/norco.png" alt="Norco" loading="lazy"></a>
       <a class="marca-t" href="bicicletas.html?marca=Marin%20Bikes" aria-label="Marin Bikes"><img src="fotos/marcas/marin.png" alt="Marin Bikes" loading="lazy"></a>
       <a class="marca-t" href="bicicletas.html?marca=Mondraker" aria-label="Mondraker"><img src="fotos/marcas/mondraker.png" alt="Mondraker" loading="lazy"></a>
