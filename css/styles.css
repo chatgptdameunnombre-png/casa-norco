@@ -324,8 +324,8 @@ main.sec--top { max-width: none; padding-left: 34px; padding-right: 34px; }
 
 /* ---- Noticias: slider de banners (home) ---- */
 .bslider { position: relative; width: 100%; height: 560px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
-.bslide { position: absolute; inset: 0; opacity: 0; transition: opacity .5s ease; display: flex; }
-.bslide.on { opacity: 1; }
+.bslide { position: absolute; inset: 0; opacity: 0; pointer-events: none; transition: opacity .5s ease; display: flex; }
+.bslide.on { opacity: 1; pointer-events: auto; }
 .bslide__img { flex: 1 1 56%; background: #0f0f12; overflow: hidden; }
 .bslide__img img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .bslide__c { flex: 1 1 44%; padding: 44px; display: flex; flex-direction: column; justify-content: center; background: var(--tile); }
