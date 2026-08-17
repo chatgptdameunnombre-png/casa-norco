@@ -50,7 +50,7 @@ async function cargarEventos() {
       .sort((a, b) => (a.orden || 0) - (b.orden || 0))
       .map(e => ({
         img: e.imagen, tipo: e.tipo, titulo: e.titulo, texto: e.texto,
-        link: e.link || "", externo: !!e.externo
+        link: e.link || "", externo: !!e.externo, fit: !!e.fit
       })).filter(a => a.img && a.titulo);
     return evs;
   } catch (e) { return []; }
