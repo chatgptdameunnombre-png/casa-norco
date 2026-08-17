@@ -107,13 +107,12 @@ function cardRel(x) {
   const media = x.imagen
     ? `<img src="${x.imagen}" alt="${x.nombre}" loading="lazy" onerror="this.style.display='none'">`
     : `<span class="card__ph">📷</span>`;
-  const flag = x.seminuevo ? `<span class="card__flag card__flag--semi">Usado</span>` : "";
-  return `<a class="card" href="producto.html?id=${encodeURIComponent(x.id)}" style="text-decoration:none;color:inherit">
-      <div class="card__media">${media}${flag}</div>
-      <div class="card__body">
-        <span class="card__cat">${x.subcategoria || x.categoria}</span>
-        <div class="card__name">${x.nombre}</div>
-        <div class="card__price">${precio}</div>
+  const flag = x.seminuevo ? `<span class="rel-card__flag">Usado</span>` : "";
+  return `<a class="rel-card" href="producto.html?id=${encodeURIComponent(x.id)}">
+      <div class="rel-card__media">${media}${flag}</div>
+      <div class="rel-card__body">
+        <div class="rel-card__name">${x.nombre}</div>
+        <div class="rel-card__price">${precio}</div>
       </div>
     </a>`;
 }
@@ -130,14 +129,14 @@ function relacionados() {
     stockTotal(x) > 0
   );
   rel.sort((a, b) => (b.subcategoria === p.subcategoria ? 1 : 0) - (a.subcategoria === p.subcategoria ? 1 : 0));
-  rel = rel.slice(0, 4);
+  rel = rel.slice(0, 12);
   if (!rel.length) { cont.innerHTML = ""; return; }
   cont.innerHTML = `
     <div class="sec-head" style="margin-bottom:18px">
       <span class="eyebrow">También te puede gustar</span>
       <h2 style="font-size:24px">Productos relacionados</h2>
     </div>
-    <div class="grid">${rel.map(cardRel).join("")}</div>`;
+    <div class="rel-row">${rel.map(cardRel).join("")}</div>`;
 }
 
 function pintarEntrega() {
