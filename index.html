@@ -12,7 +12,7 @@
   <link rel="icon" href="fotos/logo/iso-negro.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=15">
+  <link rel="stylesheet" href="css/styles.css?v=17">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -159,9 +159,16 @@
     .maleta-col { flex:1; min-width:0; }
     .maleta-grid { display:flex; gap:14px; flex-wrap:wrap; }
     @media(max-width:600px){ .maleta-grid { flex-direction:column; } }
-    .otra-linea { display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color:#c6f032; font-weight:700; flex-wrap:wrap; }
-    .cita-otra { color-scheme:dark; padding:11px 14px; border-radius:11px; border:1px dashed #4a5a18; background:#17171b; color:#c6f032; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; }
-    .cita-otra:focus { outline:none; border-color:#c6f032; }
+    .otra-fecha { margin-top:12px; }
+    .otra-fecha > summary { display:inline-flex; align-items:center; gap:8px; list-style:none; cursor:pointer; padding:11px 18px; border-radius:999px; border:1px solid #2a2a30; background:transparent; color:#d2d2d6; font-size:13px; font-weight:600; transition:border-color .2s, color .2s; }
+    .otra-fecha > summary::-webkit-details-marker { display:none; }
+    .otra-fecha > summary::before { content:"+"; font-size:16px; line-height:1; color:#c6f032; }
+    .otra-fecha > summary:hover { border-color:#c6f032; color:#c6f032; }
+    .otra-fecha[open] > summary { display:none; }
+    .otra-fecha__field { display:inline-flex; align-items:center; gap:10px; background:#17171b; border:1px solid #2a2a30; border-radius:11px; padding:4px 4px 4px 14px; }
+    .otra-fecha__field svg { width:16px; height:16px; stroke:#c6f032; flex:none; }
+    .otra-fecha__field input { color-scheme:dark; background:none; border:none; color:#f4f4f5; font-size:14px; font-family:inherit; padding:9px 6px; outline:none; }
+    .otra-fecha__field:focus-within { border-color:#c6f032; }
   </style>
   <section class="wrap sec" id="citas">
     <div class="sec-head reveal">
@@ -180,11 +187,17 @@
       <div id="ctTaller">
         <div class="citas-paso">1 · Elige el día</div>
         <div class="citas-dias" id="ctDias"></div>
-        <div class="otra-linea">📅 Otras fechas: <input type="date" id="ctOtroDia" class="cita-otra"></div>
+        <details class="otra-fecha">
+          <summary>Elegir otra fecha</summary>
+          <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><input type="date" id="ctOtroDia"></div>
+        </details>
         <div id="ctBloqueHora" hidden>
           <div class="citas-paso">2 · Elige la hora</div>
           <div class="citas-slots" id="ctSlots"></div>
-          <div class="otra-linea">🕐 Otras horas: <input type="time" id="ctOtraHora" class="cita-otra" step="1800"></div>
+          <details class="otra-fecha">
+            <summary>Elegir otra hora</summary>
+            <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><input type="time" id="ctOtraHora" step="1800"></div>
+          </details>
         </div>
         <div id="ctBloqueDatos" hidden>
           <div class="citas-paso">3 · Tus datos</div>
@@ -202,18 +215,30 @@
           <div class="maleta-col">
             <div class="citas-paso">1 · ¿Qué día la recoges?</div>
             <div class="citas-dias" id="cmDiasR"></div>
-            <div class="otra-linea">📅 Otras fechas: <input type="date" id="cmOtroDiaR" class="cita-otra"></div>
+            <details class="otra-fecha">
+              <summary>Elegir otra fecha</summary>
+              <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><input type="date" id="cmOtroDiaR"></div>
+            </details>
             <div class="citas-paso">Hora de recoger</div>
             <div class="citas-slots" id="cmHorasR"></div>
-            <div class="otra-linea">🕐 Otras horas: <input type="time" id="cmOtraHoraR" class="cita-otra" step="1800"></div>
+            <details class="otra-fecha">
+              <summary>Elegir otra hora</summary>
+              <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><input type="time" id="cmOtraHoraR" step="1800"></div>
+            </details>
           </div>
           <div class="maleta-col">
             <div class="citas-paso">2 · ¿Qué día la regresas?</div>
             <div class="citas-dias" id="cmDiasD"></div>
-            <div class="otra-linea">📅 Otras fechas: <input type="date" id="cmOtroDiaD" class="cita-otra"></div>
+            <details class="otra-fecha">
+              <summary>Elegir otra fecha</summary>
+              <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><input type="date" id="cmOtroDiaD"></div>
+            </details>
             <div class="citas-paso">Hora de regreso</div>
             <div class="citas-slots" id="cmHorasD"></div>
-            <div class="otra-linea">🕐 Otras horas: <input type="time" id="cmOtraHoraD" class="cita-otra" step="1800"></div>
+            <details class="otra-fecha">
+              <summary>Elegir otra hora</summary>
+              <div class="otra-fecha__field"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><input type="time" id="cmOtraHoraD" step="1800"></div>
+            </details>
           </div>
         </div>
         <div class="citas-paso">3 · Tus datos</div>
