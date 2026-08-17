@@ -48,6 +48,7 @@
         <a href="bicicletas.html">Bicicletas</a>
         <a href="accesorios.html">Accesorios</a>
         <a href="seminuevos.html">Usados</a>
+        <a href="#marcas">Marcas</a>
         <a href="#noticias">Noticias</a>
         <a href="#citas">Citas</a>
         <a href="#visitanos">Visítanos</a>
@@ -94,6 +95,34 @@
           <span class="cuadro__cta">Ver catálogo →</span>
         </div>
       </a>
+    </div>
+  </section>
+
+  <!-- ================= COMPRA POR MARCA ================= -->
+  <style>
+    .marcas-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    @media(max-width:760px){ .marcas-grid { grid-template-columns:repeat(2,1fr); } }
+    .marca-t { display:grid; place-items:center; padding:30px 20px; background:#141416; border:1px solid #26262c; border-radius:16px; transition:transform .35s, border-color .35s, box-shadow .35s; }
+    .marca-t img { max-width:150px; max-height:56px; width:100%; object-fit:contain; filter:brightness(0) invert(1); opacity:.5; transition:opacity .35s, transform .35s; }
+    .marca-t:hover { border-color:#c6f032; transform:translateY(-5px); box-shadow:0 12px 34px rgba(198,240,50,.1); }
+    .marca-t:hover img { opacity:1; transform:scale(1.06); }
+  </style>
+  <section class="wrap sec" id="marcas">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Las mejores marcas</span>
+      <h2>Compra por marca</h2>
+      <p>Toca una marca para ver todos sus productos.</p>
+      <span class="rule"></span>
+    </div>
+    <div class="marcas-grid reveal">
+      <a class="marca-t" href="bicicletas.html?marca=Norco" aria-label="Norco"><img src="fotos/marcas/norco.png" alt="Norco" loading="lazy"></a>
+      <a class="marca-t" href="bicicletas.html?marca=Marin%20Bikes" aria-label="Marin Bikes"><img src="fotos/marcas/marin.png" alt="Marin Bikes" loading="lazy"></a>
+      <a class="marca-t" href="bicicletas.html?marca=Mondraker" aria-label="Mondraker"><img src="fotos/marcas/mondraker.png" alt="Mondraker" loading="lazy"></a>
+      <a class="marca-t" href="accesorios.html?marca=Fox%20Racing" aria-label="Fox Racing"><img src="fotos/marcas/fox.png" alt="Fox Racing" loading="lazy"></a>
+      <a class="marca-t" href="accesorios.html?marca=ALPINESTARS" aria-label="Alpinestars"><img src="fotos/marcas/alpinestars.png" alt="Alpinestars" loading="lazy"></a>
+      <a class="marca-t" href="accesorios.html?marca=Oakley" aria-label="Oakley"><img src="fotos/marcas/oakley.png" alt="Oakley" loading="lazy"></a>
+      <a class="marca-t" href="accesorios.html?marca=Continental" aria-label="Continental"><img src="fotos/marcas/continental.png" alt="Continental" loading="lazy"></a>
+      <a class="marca-t" href="accesorios.html?marca=Marzocchi" aria-label="Marzocchi"><img src="fotos/marcas/marzocchi.png" alt="Marzocchi" loading="lazy"></a>
     </div>
   </section>
 
