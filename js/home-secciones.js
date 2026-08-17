@@ -13,8 +13,8 @@ function fsVal(v) {
 }
 function fsFields(f) { const o = {}; for (const k in f) o[k] = fsVal(f[k]); return o; }
 
-async function runQuery(field) {
-  const q = { structuredQuery: { from: [{ collectionId: "productos" }],
+async function runQuery(collectionId, field) {
+  const q = { structuredQuery: { from: [{ collectionId }],
     where: { fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: { booleanValue: true } } } } };
   const r = await fetch(`${FS}:runQuery?key=${KEY}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(q) });
   const data = await r.json();
@@ -30,7 +30,8 @@ const ANUNCIOS = [
 
 function bannerHTML(a, i) {
   const attrs = a.externo ? `target="_blank" rel="noopener"` : "";
-  const cta = a.externo ? "Ver en Instagram ↗" : "Ver la bici →";
+  const cta = a.cta || (a.externo ? "Ver en Instagram ↗" : "Ver más →");
+  const btn = a.link ? `<a class="bslide__btn" href="${a.link}" ${attrs}>${cta}</a>` : "";
   return `
     <div class="bslide${i === 0 ? " on" : ""}">
       <div class="bslide__img"><img src="${a.img}" alt="${a.titulo}" loading="lazy" style="${a.fit ? 'object-fit:contain;background:#0f0f12' : ''}"></div>
@@ -38,9 +39,21 @@ function bannerHTML(a, i) {
         ${a.tipo ? `<span class="bslide__tag">${a.tipo}</span>` : ""}
         <h3>${a.titulo}</h3>
         <p>${a.texto || ""}</p>
-        <a class="bslide__btn" href="${a.link}" ${attrs}>${cta}</a>
+        ${btn}
       </div>
     </div>`;
+}
+
+async function cargarEventos() {
+  try {
+    const evs = (await runQuery("eventos", "activo"))
+      .sort((a, b) => (a.orden || 0) - (b.orden || 0))
+      .map(e => ({
+        img: e.imagen, tipo: e.tipo, titulo: e.titulo, texto: e.texto,
+        link: e.link || "", externo: !!e.externo
+      })).filter(a => a.img && a.titulo);
+    return evs;
+  } catch (e) { return []; }
 }
 
 async function cargarNoticias() {
@@ -48,13 +61,15 @@ async function cargarNoticias() {
   if (!cont) return;
   let pre = [];
   try {
-    pre = (await runQuery("preventa")).map(p => ({
+    pre = (await runQuery("productos", "preventa")).map(p => ({
       img: p.imagen, tipo: "Preventa", titulo: p.nombre,
       texto: "En preventa. Aparta la tuya — llega pronto.",
       link: `producto.html?id=${encodeURIComponent(p.id)}`, externo: false
     })).filter(a => a.img);
   } catch (e) {}
-  const lista = [...ANUNCIOS, ...pre];
+  const eventos = await cargarEventos();
+  const base = eventos.length ? eventos : ANUNCIOS;
+  const lista = [...base, ...pre];
   const dots = lista.map((_, i) => `<span class="${i === 0 ? "on" : ""}" data-go="${i}"></span>`).join("");
   const flechas = lista.length > 1
     ? `<button class="bslider__nav bslider__prev" aria-label="Anterior">‹</button>
