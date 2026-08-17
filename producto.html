@@ -7,7 +7,7 @@
   <link rel="icon" href="fotos/logo/iso-negro.png">
   <link rel="stylesheet" href="css/styles.css?v=15">
   <style>
-    .rel-row { display:flex; gap:18px; overflow-x:auto; padding:2px 2px 18px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+    .rel-row { display:flex; gap:18px; overflow-x:auto; padding:2px clamp(18px,5vw,90px) 18px; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
     .rel-row::-webkit-scrollbar { height:8px; }
     .rel-row::-webkit-scrollbar-track { background:transparent; }
     .rel-row::-webkit-scrollbar-thumb { background:#2a2a30; border-radius:4px; }
@@ -52,7 +52,7 @@
     <div id="producto"></div>
   </main>
 
-  <section class="wrap sec" id="relacionados"></section>
+  <section class="sec" id="relacionados"></section>
 
   <footer class="ftr">
     <div class="wrap ftr__grid">
@@ -110,7 +110,7 @@
   </aside>
 
   <div class="toast-wrap" id="toasts"></div>
-  <script type="module" src="js/producto.js?v=22"></script>
+  <script type="module" src="js/producto.js?v=23"></script>
   <script type="module" src="js/auth.js?v=21"></script>
 </body>
 </html>
