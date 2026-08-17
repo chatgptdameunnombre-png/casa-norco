@@ -132,9 +132,11 @@ function relacionados() {
   rel = rel.slice(0, 12);
   if (!rel.length) { cont.innerHTML = ""; return; }
   cont.innerHTML = `
-    <div class="sec-head" style="margin-bottom:18px">
-      <span class="eyebrow">También te puede gustar</span>
-      <h2 style="font-size:24px">Productos relacionados</h2>
+    <div class="wrap">
+      <div class="sec-head" style="margin-bottom:18px">
+        <span class="eyebrow">También te puede gustar</span>
+        <h2 style="font-size:24px">Productos relacionados</h2>
+      </div>
     </div>
     <div class="rel-row">${rel.map(cardRel).join("")}</div>`;
 }
