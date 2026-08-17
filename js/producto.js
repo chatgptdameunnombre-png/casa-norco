@@ -1,7 +1,7 @@
 import { db, MODO } from "./db.js?v=21";
 import { setProductos, initCart, enCarrito, addCart } from "./cart.js?v=21";
 import { ENVIO_DOMICILIO } from "./config.js?v=21";
-import { iniciarPago } from "./checkout.js?v=21";
+import { iniciarPago, iniciarTransferencia } from "./checkout.js?v=21";
 import { tieneTallas, tallasDe, stockDeTalla, stockTotal, precioTalla, precioDesde, preciosVarian, etiquetaStock } from "./tallas.js?v=21";
 import { onMayoreo, precioHTML, precioMay } from "./mayoreo.js?v=21";
 
@@ -18,6 +18,7 @@ let productos = [];
 let fotosCache = null;
 let entregaProd = null;
 let tallaSel = null;
+let metodoPagoProd = "tarjeta";
 
 db.onProducts(async list => {
   productos = list;
@@ -92,6 +93,11 @@ function render() {
           <button type="button" class="entrega-op" data-entrega="tienda" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">Recoger en tienda</button>
           <button type="button" class="entrega-op" data-entrega="domicilio" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏠 A domicilio +${money(ENVIO_DOMICILIO)}</button>
         </div>
+        <div style="margin-top:12px;font-size:12.5px;color:#9a9aa2">¿Cómo quieres pagar? <span style="color:#7a7a82">(al usar "Comprar")</span></div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button type="button" class="pago-op" data-pago="tarjeta" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">💳 Tarjeta</button>
+          <button type="button" class="pago-op" data-pago="transferencia" style="flex:1;padding:11px;border-radius:12px;border:1px solid #2a2a30;background:#17171b;color:#f4f4f5;font-size:13px;cursor:pointer">🏦 Transferencia</button>
+        </div>
         <div id="prodTotal" style="margin-top:10px;font-weight:600;color:#c6f032"></div>
         ${p.descripcion ? `<p class="prod__desc">${p.descripcion}</p>` : ""}
         ${specs}
@@ -99,6 +105,7 @@ function render() {
     </div>`;
   document.title = `${p.nombre} — Casa Norco`;
   pintarEntrega();
+  pintarPago();
   relacionados();
 }
 
@@ -151,6 +158,15 @@ function pintarEntrega() {
   actualizarTotal();
 }
 
+function pintarPago() {
+  document.querySelectorAll(".pago-op").forEach(b => {
+    const on = b.dataset.pago === metodoPagoProd;
+    b.style.borderColor = on ? "#c6f032" : "#2a2a30";
+    b.style.background = on ? "rgba(198,240,50,.12)" : "#17171b";
+    b.style.color = on ? "#c6f032" : "#f4f4f5";
+  });
+}
+
 function precioSel(p) {
   const sized = tieneTallas(p);
   return sized ? (tallaSel ? precioTalla(p, tallaSel) : precioDesde(p)) : Number(p.precio || 0);
@@ -189,12 +205,18 @@ function comprarDirecto() {
   if (stock <= 0) return;
   if (!entregaProd) { err("Elige cómo lo quieres recibir: recoger o a domicilio"); return; }
   const precio = precioSel(p);
+  const prodInfo = [{ id: p.id, qty: 1, title: p.nombre, talla: sized ? tallaSel : "" }];
+  if (metodoPagoProd === "transferencia") {
+    const total = precio + (entregaProd === "domicilio" ? ENVIO_DOMICILIO : 0);
+    iniciarTransferencia({ productos: prodInfo, entrega: entregaProd, total, onError: () => err("No se pudo, intenta de nuevo") });
+    return;
+  }
   const title = sized ? `${p.nombre} — Talla ${tallaSel}` : p.nombre;
   const items = [{ title, quantity: 1, unit_price: precio, currency_id: "MXN" }];
   if (entregaProd === "domicilio") items.push({ title: "Envío a domicilio", quantity: 1, unit_price: ENVIO_DOMICILIO, currency_id: "MXN" });
   iniciarPago({
     items,
-    productos: [{ id: p.id, qty: 1, title: p.nombre, talla: sized ? tallaSel : "" }],
+    productos: prodInfo,
     entrega: entregaProd,
     onError: () => err("No se pudo generar el pago, intenta de nuevo")
   });
@@ -211,6 +233,8 @@ document.addEventListener("click", e => {
   if (tb) { tallaSel = tb.dataset.talla; render(); return; }
   const eb = e.target.closest("[data-entrega]");
   if (eb) { entregaProd = eb.dataset.entrega; pintarEntrega(); return; }
+  const pb = e.target.closest("[data-pago]");
+  if (pb) { metodoPagoProd = pb.dataset.pago; pintarPago(); return; }
   if (e.target.closest("#addBtn2")) { agregar(); return; }
   if (e.target.closest("#buyNow")) comprarDirecto();
 });
